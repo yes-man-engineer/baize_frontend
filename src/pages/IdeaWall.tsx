@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MessageCircle, Heart, ArrowDown } from 'lucide-react';
+import { apiClient } from '../api/client';
 
 /* ------------------------------------------------------------------ */
 /*  Data                                                               */
@@ -44,200 +45,24 @@ const FUNDING_RANGES = [
   { label: '100万以上', min: 100, max: Infinity },
 ];
 
-const IDEAS: Idea[] = [
-  {
-    id: 1,
-    category: 'AI 应用',
-    title: '帮老年人读的「AI 剪报翻译器」',
-    author: '@银发科技侠',
-    time: '2天前',
-    description: '每天自动抓取新闻，用大白话讲给爸妈听，还支持语音播报和一键转发到家庭群。',
-    comments: 12,
-    likes: 248,
-    startupCost: 15,
-    image: '/idea-ai-agent.jpg',
-  },
-  {
-    id: 2,
-    category: '内容社区',
-    title: '专门接收的分龄营养盲盒',
-    author: '@健康狂魔',
-    time: '5天前',
-    description: '根据年龄段定制营养补剂盲盒，每个月一盒，附带营养师视频讲解。',
-    comments: 27,
-    likes: 155,
-    startupCost: 50,
-        image: '/idea-community.jpg',
-  },
-  {
-    id: 3,
-    category: 'SaaS',
-    title: '小团队专用的「定期提醒管家」',
-    author: '@效率达人',
-    time: '1天前',
-    description: '比日历更智能，比项目管理工具更轻量，专门为5人以下小团队设计。',
-    comments: 42,
-    likes: 189,
-    startupCost: 8,
-        image: '/idea-saas.jpg',
-  },
-  {
-    id: 4,
-    category: '本地生活',
-    title: '给独居青年的「周末有人陪」服务',
-    author: '@城市孤岛',
-    time: '3天前',
-    description: '匹配同城兴趣相投的独居青年，周末一起做饭、看电影、逛展。',
-    comments: 18,
-    likes: 334,
-    startupCost: 20,
-        image: '/idea-wellness.jpg',
-  },
-  {
-    id: 5,
-    category: 'AI 应用',
-    title: '用 AI 生成「孩子睡前故事」的语音版',
-    author: '@新手爸爸',
-    time: '6天前',
-    description: '输入孩子当天经历，AI 生成带有教育意义的睡前故事，还能克隆爸妈声音。',
-    comments: 56,
-    likes: 412,
-    startupCost: 10,
-        image: '/idea-ai-agent.jpg',
-  },
-  {
-    id: 6,
-    category: '消费品',
-    title: '可降解的「宠物便便袋」订阅制',
-    author: '@铲屎官Pro',
-    time: '4天前',
-    description: '玉米淀粉做的全降解便便袋，按月订阅送到家，附赠除臭喷雾小样。',
-    comments: 9,
-    likes: 127,
-    startupCost: 30,
-        image: '/idea-community.jpg',
-  },
-  {
-    id: 7,
-    category: '社交产品',
-    title: '「城市漫游者」线下偶遇地图',
-    author: '@社恐反转',
-    time: '1周前',
-    description: '不聊天，先见面。在城市里标记你想偶遇的地方，系统匹配同路人。',
-    comments: 33,
-    likes: 276,
-    startupCost: 15,
-        image: '/idea-wellness.jpg',
-  },
-  {
-    id: 8,
-    category: '企业服务',
-    title: '自由职业者的「自动报税助手」',
-    author: '@数字游民',
-    time: '2天前',
-    description: '自动抓取各平台收入数据，生成报税表，支持多币种和跨境收入。',
-    comments: 21,
-    likes: 198,
-    startupCost: 5,
-        image: '/idea-saas.jpg',
-  },
-  {
-    id: 9,
-    category: '在线教育',
-    title: '「沉浸式历史」VR 课堂体验',
-    author: '@历史迷',
-    time: '3天前',
-    description: '用 VR 重现历史场景，让学生「站在」兵马俑坑里上历史课。',
-    comments: 15,
-    likes: 167,
-    startupCost: 80,
-        image: '/idea-education.jpg',
-  },
-  {
-    id: 10,
-    category: '金融科技',
-    title: '年轻人的「第一支基金」模拟器',
-    author: '@理财小白',
-    time: '5天前',
-    description: '用虚拟资金练习基金投资，附带AI教练讲解每个操作背后的逻辑。',
-    comments: 38,
-    likes: 289,
-    startupCost: 20,
-        image: '/idea-fintech.jpg',
-  },
-  {
-    id: 11,
-    category: '医疗健康',
-    title: '慢性病患者的「用药提醒」手环',
-    author: '@健康守护者',
-    time: '1周前',
-    description: '不只是提醒吃药，还能监测服药后的生理指标变化，同步给家属。',
-    comments: 11,
-    likes: 145,
-    startupCost: 60,
-        image: '/idea-wellness.jpg',
-  },
-  {
-    id: 12,
-    category: '环保可持续',
-    title: '「旧衣再造」本地裁缝对接平台',
-    author: '@循环生活家',
-    time: '4天前',
-    description: '把旧衣服交给本地裁缝改造，支持在线选款、量体、预约上门取件。',
-    comments: 24,
-    likes: 212,
-    startupCost: 10,
-        image: '/idea-community.jpg',
-  },
-  {
-    id: 13,
-    category: 'AI 应用',
-    title: '「会议纪要自动生成器」专注中文版',
-    author: '@产品经理阿伟',
-    time: '1天前',
-    description: '专门针对中文会议场景优化，支持方言识别、Action Item 自动提取。',
-    comments: 63,
-    likes: 521,
-    startupCost: 12,
-        image: '/idea-ai-agent.jpg',
-  },
-  {
-    id: 14,
-    category: '消费品',
-    title: '「办公室绿植租赁+养护」一条龙',
-    author: '@植物疗愈师',
-    time: '3天前',
-    description: '每周上门换一批新鲜绿植，死去的我们带走，让你工位永远有生机。',
-    comments: 17,
-    likes: 188,
-    startupCost: 25,
-        image: '/idea-community.jpg',
-  },
-  {
-    id: 15,
-    category: '社交产品',
-    title: '「技能交换」社区 — 用技能代替货币',
-    author: '@交换人生',
-    time: '5天前',
-    description: '你会做PPT，我会弹吉他，我们交换一小时。平台提供信用担保。',
-    comments: 44,
-    likes: 367,
-    startupCost: 8,
-        image: '/idea-wellness.jpg',
-  },
-  {
-    id: 16,
-    category: '本地生活',
-    title: '「邻居食堂」—— 在家做饭顺便卖给邻居',
-    author: '@厨房达人',
-    time: '2天前',
-    description: '认证家庭厨师，每天多做几份饭，邻居线上下单、下楼自取。',
-    comments: 89,
-    likes: 634,
-    startupCost: 5,
-        image: '/idea-community.jpg',
-  },
-];
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
+
+function formatRelativeTime(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay >= 7) return `${Math.floor(diffDay / 7)}周前`;
+  if (diffDay >= 1) return `${diffDay}天前`;
+  if (diffHour >= 1) return `${diffHour}小时前`;
+  if (diffMin >= 1) return `${diffMin}分钟前`;
+  return '刚刚';
+}
 
 /* ------------------------------------------------------------------ */
 /*  Animation helpers                                                  */
@@ -274,11 +99,47 @@ export default function IdeaWall() {
   const [activeFunding, setActiveFunding] = useState('全部资金');
   const [searchQuery, setSearchQuery] = useState('');
   const [visibleCount, setVisibleCount] = useState(12);
+  const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const selectedRange = FUNDING_RANGES.find(r => r.label === activeFunding) || FUNDING_RANGES[0];
 
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    apiClient
+      .ideas()
+      .then((data) => {
+        if (cancelled) return;
+        const mapped = data.list.map((item) => ({
+          id: item.id,
+          category: item.category,
+          title: item.title,
+          author: item.author,
+          time: formatRelativeTime(item.created_at),
+          description: item.description,
+          comments: item.comments,
+          likes: item.likes,
+          image: item.image || '',
+          startupCost: item.startup_cost,
+        }));
+        setIdeas(mapped);
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : '加载失败');
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const filteredIdeas = useMemo(() => {
-    let result = IDEAS;
+    let result = ideas;
     if (activeCategory !== '全部') {
       result = result.filter((idea) => idea.category === activeCategory);
     }
@@ -295,7 +156,7 @@ export default function IdeaWall() {
       );
     }
     return result;
-  }, [activeCategory, activeFunding, searchQuery, selectedRange]);
+  }, [activeCategory, activeFunding, searchQuery, selectedRange, ideas]);
 
   const visibleIdeas = filteredIdeas.slice(0, visibleCount);
   const hasMore = visibleCount < filteredIdeas.length;
@@ -481,75 +342,93 @@ export default function IdeaWall() {
       {/* ========== Idea Grid ========== */}
       <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeCategory + searchQuery}
-              variants={staggerContainer}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-            >
-              {visibleIdeas.map((idea) => (
-                <motion.div
-                  key={idea.id}
-                  variants={cardVariant}
-                  className="group bg-[#F3EDE4] border border-[rgba(22,66,60,0.1)] rounded-2xl p-5 cursor-pointer transition-all duration-[400ms] hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(22,66,60,0.12)] flex flex-col"
-                  style={{ transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)' }}
-                >
-                  {/* Category pill + Startup cost */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-[rgba(44,110,99,0.15)] text-[#2C6E63]"
+          {loading && (
+            <div className="text-center py-24">
+              <p className="text-[#6B6B6B] text-base" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
+                加载中...
+              </p>
+            </div>
+          )}
+
+          {error && (
+            <div className="text-center py-24">
+              <p className="text-[#6B6B6B] text-base" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
+                加载失败: {error}
+              </p>
+            </div>
+          )}
+
+          {!loading && !error && (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeCategory + searchQuery}
+                variants={staggerContainer}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              >
+                {visibleIdeas.map((idea) => (
+                  <motion.div
+                    key={idea.id}
+                    variants={cardVariant}
+                    className="group bg-[#F3EDE4] border border-[rgba(22,66,60,0.1)] rounded-2xl p-5 cursor-pointer transition-all duration-[400ms] hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(22,66,60,0.12)] flex flex-col"
+                    style={{ transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)' }}
+                  >
+                    {/* Category pill + Startup cost */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-[rgba(44,110,99,0.15)] text-[#2C6E63]"
+                        style={{ fontFamily: '"Noto Sans SC", sans-serif' }}
+                      >
+                        {idea.category}
+                      </span>
+                      <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-[#D4A853]/15 text-[#8B6F47]">
+                        启动 ¥{idea.startupCost}万
+                      </span>
+                    </div>
+
+                    {/* Title */}
+                    <h3
+                      className="text-base font-bold text-[#1A1A1A] leading-[1.4] tracking-[0.02em] line-clamp-2"
                       style={{ fontFamily: '"Noto Sans SC", sans-serif' }}
                     >
-                      {idea.category}
-                    </span>
-                    <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-[#D4A853]/15 text-[#8B6F47]">
-                      启动 ¥{idea.startupCost}万
-                    </span>
-                  </div>
+                      {idea.title}
+                    </h3>
 
-                  {/* Title */}
-                  <h3
-                    className="text-base font-bold text-[#1A1A1A] leading-[1.4] tracking-[0.02em] line-clamp-2"
-                    style={{ fontFamily: '"Noto Sans SC", sans-serif' }}
-                  >
-                    {idea.title}
-                  </h3>
+                    {/* Description */}
+                    <p
+                      className="mt-2 text-[13px] text-[#1A1A1A]/80 leading-[1.75] line-clamp-2 flex-1"
+                      style={{ fontFamily: '"Noto Sans SC", sans-serif' }}
+                    >
+                      {idea.description}
+                    </p>
 
-                  {/* Description */}
-                  <p
-                    className="mt-2 text-[13px] text-[#1A1A1A]/80 leading-[1.75] line-clamp-2 flex-1"
-                    style={{ fontFamily: '"Noto Sans SC", sans-serif' }}
-                  >
-                    {idea.description}
-                  </p>
+                    {/* Author & Time */}
+                    <div className="mt-3 flex items-center gap-2 text-xs text-[#6B6B6B]">
+                      <span style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>{idea.author}</span>
+                      <span className="text-[#6B6B6B]/40">·</span>
+                      <span style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>{idea.time}</span>
+                    </div>
 
-                  {/* Author & Time */}
-                  <div className="mt-3 flex items-center gap-2 text-xs text-[#6B6B6B]">
-                    <span style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>{idea.author}</span>
-                    <span className="text-[#6B6B6B]/40">·</span>
-                    <span style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>{idea.time}</span>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="mt-3 pt-3 border-t border-[rgba(22,66,60,0.08)] flex items-center gap-4">
-                    <span className="flex items-center gap-1 text-[13px] text-[#6B6B6B]" style={{ fontFamily: '"Space Grotesk", monospace' }}>
-                      <MessageCircle size={14} />
-                      {idea.comments}
-                    </span>
-                    <span className="flex items-center gap-1 text-[13px] text-[#6B6B6B]" style={{ fontFamily: '"Space Grotesk", monospace' }}>
-                      <Heart size={14} />
-                      {idea.likes}
-                    </span>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </AnimatePresence>
+                    {/* Stats */}
+                    <div className="mt-3 pt-3 border-t border-[rgba(22,66,60,0.08)] flex items-center gap-4">
+                      <span className="flex items-center gap-1 text-[13px] text-[#6B6B6B]" style={{ fontFamily: '"Space Grotesk", monospace' }}>
+                        <MessageCircle size={14} />
+                        {idea.comments}
+                      </span>
+                      <span className="flex items-center gap-1 text-[13px] text-[#6B6B6B]" style={{ fontFamily: '"Space Grotesk", monospace' }}>
+                        <Heart size={14} />
+                        {idea.likes}
+                      </span>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </AnimatePresence>
+          )}
 
           {/* Empty state */}
-          {visibleIdeas.length === 0 && (
+          {!loading && !error && visibleIdeas.length === 0 && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -562,7 +441,7 @@ export default function IdeaWall() {
           )}
 
           {/* Load More */}
-          {hasMore && (
+          {!loading && !error && hasMore && (
             <div className="mt-12 flex justify-center">
               <button
                 onClick={() => setVisibleCount((c) => c + 12)}

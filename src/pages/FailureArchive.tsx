@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ArrowRight, ArrowDown } from 'lucide-react';
+import { apiClient } from '../api/client';
 
 /* ------------------------------------------------------------------ */
 /*  Data                                                               */
@@ -29,159 +30,6 @@ const CATEGORIES = [
   'AI 应用',
   '金融科技',
   '企业服务',
-];
-
-const FAILURES: FailureCase[] = [
-  {
-    id: 1,
-    name: 'Meowspace',
-    category: '共享办公',
-    deathDate: '2023.11',
-    moneyBurned: '¥1,200万',
-    lifespan: '18个月',
-    quote: '那时候以为有了一个空间就有了生态，后来才发现，空间是最不值钱的。',
-    coverImage: '/fail-meowspace.jpg',
-  },
-  {
-    id: 2,
-    name: '晨读岛',
-    category: '在线教育',
-    deathDate: '2022.8',
-    moneyBurned: '¥860万',
-    lifespan: '14个月',
-    quote: '做了6个月才发现，用户要的不是早起，而是「我已经努力了」的感觉。',
-    coverImage: '/fail-morning-island.jpg',
-  },
-  {
-    id: 3,
-    name: 'Fikaa 咖啡',
-    category: '消费品',
-    deathDate: '2024.1',
-    moneyBurned: '¥2,400万',
-    lifespan: '26个月',
-    quote: '第4家门店开业那天，两个合伙人同时在微信里跟我说，要不我们别开了。',
-    coverImage: '/fail-fikaa-coffee.jpg',
-  },
-  {
-    id: 4,
-    name: '邻友圈',
-    category: '社交产品',
-    deathDate: '2023.5',
-    moneyBurned: '¥3,100万',
-    lifespan: '32个月',
-    quote: 'DAU 涨到10万的那天，我们烧完了最后一笔钱。庆祝和倒闭发生在同一个下午。',
-    coverImage: '/fail-social-app.jpg',
-  },
-  {
-    id: 5,
-    name: '智学宝',
-    category: '在线教育',
-    deathDate: '2022.12',
-    moneyBurned: '¥1,800万',
-    lifespan: '22个月',
-    quote: '家长说我们的产品很好，但「等孩子考完试再说」。这个「再说」永远不会来。',
-    coverImage: '/fail-edtech.jpg',
-  },
-  {
-    id: 6,
-    name: '鲜集',
-    category: '本地生活',
-    deathDate: '2023.9',
-    moneyBurned: '¥4,500万',
-    lifespan: '38个月',
-    quote: '前置仓的模式是对的，只是我们城市不对、时机不对、团队也不对。',
-    coverImage: '/fail-marketplace.jpg',
-  },
-  {
-    id: 7,
-    name: '算力云',
-    category: 'AI 应用',
-    deathDate: '2024.3',
-    moneyBurned: '¥6,200万',
-    lifespan: '16个月',
-    quote: 'GPT-4发布的那天，我们整个团队沉默了两个小时。然后有人开始改简历。',
-    coverImage: '/fail-meowspace.jpg',
-  },
-  {
-    id: 8,
-    name: '易账通',
-    category: '金融科技',
-    deathDate: '2022.6',
-    moneyBurned: '¥900万',
-    lifespan: '20个月',
-    quote: '监管文件下来的那天，我才明白「合规成本」不是一个词，是一个死刑判决。',
-    coverImage: '/fail-morning-island.jpg',
-  },
-  {
-    id: 9,
-    name: '绿途',
-    category: '企业服务',
-    deathDate: '2023.2',
-    moneyBurned: '¥1,500万',
-    lifespan: '28个月',
-    quote: '用户都说「这个概念很好」，但好概念和付费之间隔着一条银河。',
-    coverImage: '/fail-fikaa-coffee.jpg',
-  },
-  {
-    id: 10,
-    name: '一起画',
-    category: '社交产品',
-    deathDate: '2023.7',
-    moneyBurned: '¥2,100万',
-    lifespan: '24个月',
-    quote: '我们搭了一个很好的创作工具，但忘了问用户：你真的想画画吗？',
-    coverImage: '/fail-social-app.jpg',
-  },
-  {
-    id: 11,
-    name: '农掌柜',
-    category: '本地生活',
-    deathDate: '2022.10',
-    moneyBurned: '¥3,800万',
-    lifespan: '30个月',
-    quote: '从田间到餐桌的路，比我们PPT上写的要远十倍。冷链不是钱能砸出来的。',
-    coverImage: '/fail-marketplace.jpg',
-  },
-  {
-    id: 12,
-    name: '语伴说',
-    category: '在线教育',
-    deathDate: '2024.2',
-    moneyBurned: '¥1,600万',
-    lifespan: '20个月',
-    quote: '真人外教打不过AI，AI打不过抖音。用户学英语的耐心只有15秒。',
-    coverImage: '/fail-edtech.jpg',
-  },
-  {
-    id: 13,
-    name: '碳迹',
-    category: '企业服务',
-    deathDate: '2023.4',
-    moneyBurned: '¥2,700万',
-    lifespan: '26个月',
-    quote: '碳中和是未来的生意，但企业今天连工资都要拖欠，谁管你碳排放。',
-    coverImage: '/fail-meowspace.jpg',
-  },
-  {
-    id: 14,
-    name: '小饭桌',
-    category: '本地生活',
-    deathDate: '2022.11',
-    moneyBurned: '¥750万',
-    lifespan: '12个月',
-    quote: '食品安全许可证办下来的那天，我们的现金流刚好断了。命运真会开玩笑。',
-    coverImage: '/fail-fikaa-coffee.jpg',
-  },
-  {
-    id: 15,
-    name: '医陪通',
-    category: '企业服务',
-    deathDate: '2023.8',
-    moneyBurned: '¥1,950万',
-    lifespan: '22个月',
-    quote: '医院愿意试点，患者愿意付费，但护士宁愿辞职也不干这活。人力是死穴。',
-    coverImage: '/fail-morning-island.jpg',
-  },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -218,9 +66,43 @@ export default function FailureArchive() {
   const [activeCategory, setActiveCategory] = useState('全部');
   const [searchQuery, setSearchQuery] = useState('');
   const [visibleCount, setVisibleCount] = useState(9);
+  const [failures, setFailures] = useState<FailureCase[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    apiClient
+      .failures()
+      .then((data) => {
+        if (cancelled) return;
+        const mapped: FailureCase[] = data.list.map((item) => ({
+          id: item.id,
+          name: item.company_name,
+          category: item.category,
+          deathDate: item.created_at ? item.created_at.slice(0, 7).replace('-', '.') : '',
+          moneyBurned: item.money_burned,
+          lifespan: `${item.lifespan}个月`,
+          quote: item.story,
+          coverImage: '',
+        }));
+        setFailures(mapped);
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : '加载失败');
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filteredFailures = useMemo(() => {
-    let result = FAILURES;
+    let result = failures;
     if (activeCategory !== '全部') {
       result = result.filter((f) => f.category === activeCategory);
     }
@@ -234,7 +116,7 @@ export default function FailureArchive() {
       );
     }
     return result;
-  }, [activeCategory, searchQuery]);
+  }, [activeCategory, searchQuery, failures]);
 
   const visibleFailures = filteredFailures.slice(0, visibleCount);
   const hasMore = visibleCount < filteredFailures.length;
@@ -402,104 +284,132 @@ export default function FailureArchive() {
       {/* ========== Failure Case Grid ========== */}
       <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeCategory + searchQuery}
-              variants={staggerContainer}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-            >
-              {visibleFailures.map((failure) => (
-                <motion.div
-                  key={failure.id}
-                  variants={cardVariant}
-                  className="group bg-[#16423C] border border-[rgba(250,246,241,0.15)] rounded-[20px] overflow-hidden cursor-pointer transition-transform duration-500 hover:scale-[1.02]"
-                  style={{ transitionTimingFunction: 'ease' }}
-                >
-                  {/* Cover Image */}
-                  <div className="relative overflow-hidden aspect-[4/3]">
-                    <img
-                      src={failure.coverImage}
-                      alt={failure.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    {/* Category tag */}
-                    <span
-                      className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#8B6F47] text-[#FAF6F1]"
-                      style={{ fontFamily: '"Noto Sans SC", sans-serif' }}
-                    >
-                      {failure.category}
-                    </span>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-5">
-                    {/* Company name */}
-                    <h3
-                      className="text-[22px] font-bold text-[#FAF6F1] leading-[1.3]"
-                      style={{ fontFamily: '"Noto Serif SC", serif' }}
-                    >
-                      {failure.name}
-                    </h3>
-
-                    {/* Death date */}
-                    <p
-                      className="mt-1 text-xs text-[#8B6F47]"
-                      style={{ fontFamily: '"Noto Sans SC", sans-serif' }}
-                    >
-                      卒于 {failure.deathDate} · {failure.lifespan} · {failure.moneyBurned}
-                    </p>
-
-                    {/* Quote */}
-                    <p
-                      className="mt-3 text-sm text-[#FAF6F1]/80 leading-[1.75] line-clamp-3 italic"
-                      style={{ fontFamily: '"Noto Sans SC", sans-serif' }}
-                    >
-                      &ldquo;{failure.quote}&rdquo;
-                    </p>
-
-                    {/* View detail link */}
-                    <Link
-                      to={`/failures/${failure.id}`}
-                      className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-[#2C6E63] transition-all duration-300 group/link hover:gap-2"
-                      style={{ fontFamily: '"Noto Sans SC", sans-serif' }}
-                    >
-                      查看全部
-                      <ArrowRight size={12} className="transition-transform duration-300 group-hover/link:translate-x-1" />
-                    </Link>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Empty state */}
-          {visibleFailures.length === 0 && (
+          {loading && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="text-center py-24"
             >
               <p className="text-[#FAF6F1]/60 text-base" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
-                没有找到匹配的案例，换个关键词试试？
+                加载中...
               </p>
             </motion.div>
           )}
 
-          {/* Load More */}
-          {hasMore && (
-            <div className="mt-12 flex justify-center">
-              <button
-                onClick={() => setVisibleCount((c) => c + 9)}
-                className="inline-flex items-center gap-2 px-8 py-3 border border-[rgba(250,246,241,0.3)] text-[#FAF6F1] rounded-full text-sm font-medium transition-all duration-300 hover:bg-[rgba(250,246,241,0.1)]"
-                style={{ fontFamily: '"Noto Sans SC", sans-serif' }}
-              >
-                加载更多墓志铭
-                <ArrowDown size={16} />
-              </button>
-            </div>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-24"
+            >
+              <p className="text-[#FAF6F1]/60 text-base" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
+                {error}
+              </p>
+            </motion.div>
+          )}
+
+          {!loading && !error && (
+            <>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeCategory + searchQuery}
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                >
+                  {visibleFailures.map((failure) => (
+                    <motion.div
+                      key={failure.id}
+                      variants={cardVariant}
+                      className="group bg-[#16423C] border border-[rgba(250,246,241,0.15)] rounded-[20px] overflow-hidden cursor-pointer transition-transform duration-500 hover:scale-[1.02]"
+                      style={{ transitionTimingFunction: 'ease' }}
+                    >
+                      {/* Cover Image */}
+                      <div className="relative overflow-hidden aspect-[4/3]">
+                        <img
+                          src={failure.coverImage}
+                          alt={failure.name}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        {/* Category tag */}
+                        <span
+                          className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#8B6F47] text-[#FAF6F1]"
+                          style={{ fontFamily: '"Noto Sans SC", sans-serif' }}
+                        >
+                          {failure.category}
+                        </span>
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-5">
+                        {/* Company name */}
+                        <h3
+                          className="text-[22px] font-bold text-[#FAF6F1] leading-[1.3]"
+                          style={{ fontFamily: '"Noto Serif SC", serif' }}
+                        >
+                          {failure.name}
+                        </h3>
+
+                        {/* Death date */}
+                        <p
+                          className="mt-1 text-xs text-[#8B6F47]"
+                          style={{ fontFamily: '"Noto Sans SC", sans-serif' }}
+                        >
+                          卒于 {failure.deathDate} · {failure.lifespan} · {failure.moneyBurned}
+                        </p>
+
+                        {/* Quote */}
+                        <p
+                          className="mt-3 text-sm text-[#FAF6F1]/80 leading-[1.75] line-clamp-3 italic"
+                          style={{ fontFamily: '"Noto Sans SC", sans-serif' }}
+                        >
+                          &ldquo;{failure.quote}&rdquo;
+                        </p>
+
+                        {/* View detail link */}
+                        <Link
+                          to={`/failures/${failure.id}`}
+                          className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-[#2C6E63] transition-all duration-300 group/link hover:gap-2"
+                          style={{ fontFamily: '"Noto Sans SC", sans-serif' }}
+                        >
+                          查看全部
+                          <ArrowRight size={12} className="transition-transform duration-300 group-hover/link:translate-x-1" />
+                        </Link>
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Empty state */}
+              {visibleFailures.length === 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-24"
+                >
+                  <p className="text-[#FAF6F1]/60 text-base" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
+                    没有找到匹配的案例，换个关键词试试？
+                  </p>
+                </motion.div>
+              )}
+
+              {/* Load More */}
+              {hasMore && (
+                <div className="mt-12 flex justify-center">
+                  <button
+                    onClick={() => setVisibleCount((c) => c + 9)}
+                    className="inline-flex items-center gap-2 px-8 py-3 border border-[rgba(250,246,241,0.3)] text-[#FAF6F1] rounded-full text-sm font-medium transition-all duration-300 hover:bg-[rgba(250,246,241,0.1)]"
+                    style={{ fontFamily: '"Noto Sans SC", sans-serif' }}
+                  >
+                    加载更多墓志铭
+                    <ArrowDown size={16} />
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>

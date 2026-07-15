@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { motion } from 'framer-motion';
 import { ArrowBigUp, ArrowBigDown, MessageCircle, Share2, Clock } from 'lucide-react';
+import { apiClient } from '../api/client';
 
 /* ------------------------------------------------------------------ */
 /*  Data                                                               */
@@ -17,25 +18,28 @@ interface Post {
   votes: number;
   comments: number;
   time: string;
+  createdAt: string;
   images?: string[];
 }
 
 const CATEGORIES = ['全部', '感悟', '复盘', '求助', '经验分享', '数据讨论', '观点碰撞', '闲聊'];
 
-const POSTS: Post[] = [
-  { id: 1, title: 'AI 创业还有活路吗？看了数据之后我犹豫了', excerpt: '做了一年AI工具，月活从2万掉到3000。感觉大厂一进场就没小团队什么事了，有没有人还在坚持的？求真实经验分享。', author: '犹豫的极客', avatar: '/avatar-founder-1.jpg', category: '数据讨论', votes: 234, comments: 47, time: '2小时前' },
-  { id: 2, title: '合伙人退出，我应该硬撑还是解散？', excerpt: '联合创始人上个月说 burnout 了，要退出。现在剩我一个人扛着5人团队，现金流只能撑3个月。真的很迷茫。', author: '孤军奋战', avatar: '/avatar-founder-2.jpg', category: '求助', votes: 189, comments: 32, time: '5小时前' },
-  { id: 3, title: '分享我从 0 到 ¥50万 MRR 的真实路径', excerpt: 'SaaS做了18个月，终于摸到盈利门槛。想复盘一下最关键的几个决策和差点让我死掉的那几次。', author: 'SaaS老兵', avatar: '/avatar-founder-3.jpg', category: '经验分享', votes: 567, comments: 89, time: '1天前', images: ['/idea-saas.jpg'] },
-  { id: 4, title: '为什么我觉得「先验证再开发」是废话？', excerpt: '理论都懂，但现实是等你验证完，窗口期早过了。有时候就是赌一把的事，评论区聊聊你们的看法？', author: '行动派', avatar: '/avatar-founder-1.jpg', category: '观点碰撞', votes: 312, comments: 56, time: '3小时前' },
-  { id: 5, title: '第一次创业失败后的 100 天，我是怎么恢复的', excerpt: '公司关门的第100天，今天终于能睡个好觉了。复盘一下从崩溃到重建的过程，希望能帮到正在经历的人。', author: '凤凰涅槃', avatar: '/avatar-founder-2.jpg', category: '复盘', votes: 445, comments: 41, time: '2天前', images: ['/fail-morning-island.jpg'] },
-  { id: 6, title: '有人愿意分享自己的「僵尸项目」吗？', excerpt: '就是那些不死不活、关又不甘心、继续又看不到希望的项目。我先来：一个做了两年的社区团购小程序。', author: 'zombie', avatar: '/avatar-founder-3.jpg', category: '闲聊', votes: 178, comments: 23, time: '6小时前' },
-  { id: 7, title: '来这里之前我以为我的失败很丢人', excerpt: '看了200多个墓志铭之后我发现——原来我们死的方式都一样。那种释然感，是别的地方给不了的。', author: '林深见鹿', avatar: '/avatar-founder-1.jpg', category: '感悟', votes: 521, comments: 67, time: '1天前', images: ['/fail-meowspace.jpg'] },
-  { id: 8, title: '产品下线的第十个夜晚，我哭着刷这里的帖子', excerpt: '比看任何创业书都有用。这里的真实感是别的地方给不了的。每一条墓志铭都是创业者的心路历程。', author: '一只野生PM', avatar: '/avatar-founder-2.jpg', category: '感悟', votes: 398, comments: 45, time: '3天前' },
-  { id: 9, title: '把自己三年前死掉的项目写下来之后', excerpt: '我睡了三个月里的第一个安稳觉。原来写出来比憋在心里好受太多了。这个网站是有魔力的。', author: 'Kai老凯', avatar: '/avatar-founder-3.jpg', category: '复盘', votes: 612, comments: 78, time: '12小时前', images: ['/fail-meowspace.jpg', '/idea-saas.jpg'] },
-  { id: 10, title: '还没毕业就失败了两次，但我还在', excerpt: '这里的每一条墓志铭都让我相信，失败不是终点，放弃学习才是。致敬每一个还在路上的创业者。', author: '纸飞机', avatar: '/avatar-founder-1.jpg', category: '感悟', votes: 267, comments: 34, time: '2天前' },
-  { id: 11, title: '有人用「不做清单」做决策的吗？', excerpt: '整理了一份「坚决不做的业务清单」，发现比「要做的清单」更有用。分享一下我的方法论。', author: '减法主义', avatar: '/avatar-founder-2.jpg', category: '经验分享', votes: 156, comments: 28, time: '8小时前' },
-  { id: 12, title: '投资人问我「如果Google做你怎么办」，我沉默了', excerpt: 'Pitch meeting 上被问到这个问题，当场语塞。回来想了三天，现在有了答案。分享一下我的思路。', author: 'pitching新手', avatar: '/avatar-founder-3.jpg', category: '求助', votes: 289, comments: 52, time: '1天前', images: ['/idea-ai-agent.jpg'] },
-];
+function timeAgo(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  if (seconds < 60) return '刚刚';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}分钟前`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}小时前`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}天前`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}个月前`;
+  const years = Math.floor(months / 12);
+  return `${years}年前`;
+}
 
 const easeOutExpo = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
@@ -84,7 +88,7 @@ function ImageGrid({ images }: { images: string[] | undefined }) {
   );
 }
 
-function PostCard({ post, index }: { post: typeof POSTS[0]; index: number }) {
+function PostCard({ post, index }: { post: Post; index: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -147,14 +151,101 @@ function PostCard({ post, index }: { post: typeof POSTS[0]; index: number }) {
 export default function Community() {
   const [activeCategory, setActiveCategory] = useState('全部');
   const [sortBy, setSortBy] = useState<'hot' | 'new'>('hot');
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        setLoading(true);
+        setError(null);
+        const [ideasRes, failuresRes, ongoingRes, postsRes] = await Promise.all([
+          apiClient.ideas(),
+          apiClient.failures(),
+          apiClient.ongoing(),
+          apiClient.posts(),
+        ]);
+        if (cancelled) return;
+
+        const normalized: Post[] = [
+          ...(ideasRes.list || []).map(item => ({
+            id: item.id,
+            title: item.title,
+            excerpt: item.description,
+            author: item.author || '',
+            avatar: '',
+            category: item.category,
+            votes: item.likes || 0,
+            comments: item.comments || 0,
+            time: timeAgo(item.created_at),
+            createdAt: item.created_at,
+            images: item.image ? [item.image] : undefined,
+          })),
+          ...(failuresRes.list || []).map(item => ({
+            id: item.id + 1000000,
+            title: item.title,
+            excerpt: item.story,
+            author: item.company_name || '',
+            avatar: '',
+            category: item.category,
+            votes: item.likes || 0,
+            comments: item.comments || 0,
+            time: timeAgo(item.created_at),
+            createdAt: item.created_at,
+            images: undefined,
+          })),
+          ...(ongoingRes.list || []).map(item => ({
+            id: item.id + 2000000,
+            title: item.title,
+            excerpt: item.description || item.struggle,
+            author: '',
+            avatar: '',
+            category: item.category,
+            votes: item.votes || 0,
+            comments: item.comments || 0,
+            time: timeAgo(item.created_at),
+            createdAt: item.created_at,
+            images: undefined,
+          })),
+          ...(postsRes.list || []).map(item => ({
+            id: item.id + 3000000,
+            title: item.title,
+            excerpt: item.content,
+            author: item.author || '',
+            avatar: '',
+            category: item.category,
+            votes: (item.votes_up || 0) - (item.votes_down || 0),
+            comments: item.comments || 0,
+            time: timeAgo(item.created_at),
+            createdAt: item.created_at,
+            images: undefined,
+          })),
+        ];
+
+        setPosts(normalized);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : '加载失败');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
   const filtered = activeCategory === '全部'
-    ? POSTS
-    : POSTS.filter(p => p.category === activeCategory);
+    ? posts
+    : posts.filter(p => p.category === activeCategory);
 
   const sorted = sortBy === 'hot'
     ? [...filtered].sort((a, b) => b.votes - a.votes)
-    : [...filtered].sort((a, b) => b.id - a.id);
+    : [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (
     <div className="min-h-[100dvh] bg-[#FAF8F5]">
@@ -202,21 +293,28 @@ export default function Community() {
 
       {/* Feed */}
       <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-16">
-        <div className="flex flex-col gap-4">
-          {sorted.map((post, i) => (
-            <PostCard key={post.id} post={post} index={i} />
-          ))}
-        </div>
+        {loading && <div className="text-center py-24 text-[#666666]">加载中...</div>}
+        {error && <div className="text-center py-24 text-[#8B2942]">{error}</div>}
+        {!loading && !error && (
+          <>
+            <div className="flex flex-col gap-4">
+              {sorted.map((post, i) => (
+                <PostCard key={post.id} post={post} index={i} />
+              ))}
+            </div>
 
-        {sorted.length === 0 && <div className="text-center py-24 text-[#666666]">没有找到匹配的内容</div>}
+            {sorted.length === 0 && <div className="text-center py-24 text-[#666666]">没有找到匹配的内容</div>}
 
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link to="/submit" className="inline-flex items-center gap-2 px-6 py-3 bg-[#1A3D2E] text-[#FAF8F5] rounded-full font-bold text-sm hover:bg-[#0D1F15] transition-colors">
-            + 发布帖子
-          </Link>
-          <span className="text-xs text-[#999999]">所有投稿可选匿名 · 内容经审核后发布</span>
-        </div>
+            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to="/submit" className="inline-flex items-center gap-2 px-6 py-3 bg-[#1A3D2E] text-[#FAF8F5] rounded-full font-bold text-sm hover:bg-[#0D1F15] transition-colors">
+                + 发布帖子
+              </Link>
+              <span className="text-xs text-[#999999]">所有投稿可选匿名 · 内容经审核后发布</span>
+            </div>
+          </>
+        )}
       </section>
     </div>
   );
 }
+
