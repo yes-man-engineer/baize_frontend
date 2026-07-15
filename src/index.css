@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+    --radius: 0.625rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Baize Design Tokens */
+    --deep-green: #16423C;
+    --medium-green: #2C6E63;
+    --warm-cream: #FAF6F1;
+    --text-dark: #1A1A1A;
+    --text-muted-custom: #6B6B6B;
+    --warm-tan: #C9A96E;
+    --soft-brown: #8B6F47;
+    --light-green: #6A9E4F;
+    --pale-cream: #F3EDE4;
+    --border-subtle: rgba(22, 66, 60, 0.1);
+    --border-dark: rgba(250, 246, 241, 0.15);
+    --chart-green-1: #16423C;
+    --chart-green-2: #2C6E63;
+    --chart-green-3: #4A9B8C;
+    --chart-green-4: #7EC4B8;
+    --chart-green-5: #B5E0D8;
+    --chart-death: #8B2942;
+    --chart-fail: #C9A96E;
+
+    /* Easing tokens */
+    --ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out-smooth: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    font-family: "Noto Sans SC", sans-serif;
+    color: var(--text-dark);
+    background-color: var(--warm-cream);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  h1, h2 {
+    font-family: "Noto Serif SC", serif;
+  }
+}
