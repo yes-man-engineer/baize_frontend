@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Check, Lightbulb, ScrollText, AlertCircle } from 'lucide-react';
+import { apiClient } from '../api/client';
 
 /* ---------- easing ---------- */
 const easeOutExpo: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -11,6 +12,14 @@ const industries = ['AI / 人工智能', 'SaaS / 企业服务', '电商 / 零售
 const survivalTimes = ['不到 6 个月', '6 个月 - 1 年', '1 - 2 年', '2 - 3 年', '3 年以上'];
 
 const teamSizes = ['1-2 人', '3-5 人', '6-10 人', '11-30 人', '30 人以上'];
+
+/* 选项文案 → 后端数值字段的代表值 */
+const survivalTimeMonths: Record<string, number> = {
+  '不到 6 个月': 4, '6 个月 - 1 年': 9, '1 - 2 年': 18, '2 - 3 年': 30, '3 年以上': 42,
+};
+const teamSizeCount: Record<string, number> = {
+  '1-2 人': 2, '3-5 人': 4, '6-10 人': 8, '11-30 人': 20, '30 人以上': 30,
+};
 
 /* ---------- types ---------- */
 type SubmissionMode = 'idea' | 'failure';
@@ -178,6 +187,7 @@ export default function Submit() {
   const [failureForm, setFailureForm] = useState<FailureForm>(defaultFailure);
   const [openAccordion, setOpenAccordion] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const totalSteps = mode === 'idea' ? 3 : 4;
@@ -224,8 +234,47 @@ export default function Submit() {
     if (step > 1) setStep(step - 1);
   }
 
-  function handleSubmit() {
-    if (validateStep()) setSubmitted(true);
+  async function handleSubmit() {
+    if (!validateStep() || submitting) return;
+    setSubmitting(true);
+    try {
+      if (mode === 'idea') {
+        const f = ideaForm;
+        const extras = [
+          f.targetUser.trim() && `目标用户：${f.targetUser.trim()}`,
+          f.businessModel.trim() && `商业模式：${f.businessModel.trim()}`,
+          f.helpNeeded.trim() && `需要的帮助：${f.helpNeeded.trim()}`,
+        ].filter(Boolean);
+        await apiClient.createIdea({
+          title: f.title.trim(),
+          category: f.industry,
+          description: [f.oneLiner.trim(), f.detail.trim(), extras.join('\n')].filter(Boolean).join('\n\n'),
+          author: f.anonymous ? '匿名用户' : f.nickname.trim() || '匿名用户',
+        });
+      } else {
+        const f = failureForm;
+        const extras = [
+          f.biggestExpense.trim() && `最大的开销：${f.biggestExpense.trim()}`,
+          f.wouldDoDifferent.trim() && `如果重来：${f.wouldDoDifferent.trim()}`,
+          f.advice.trim() && `给后来者的建议：${f.advice.trim()}`,
+        ].filter(Boolean);
+        await apiClient.createFailure({
+          title: f.projectName.trim(),
+          company_name: f.projectName.trim(),
+          category: f.industry,
+          story: [f.projectIntro.trim(), f.failureStory.trim(), extras.join('\n')].filter(Boolean).join('\n\n'),
+          lesson: f.topLesson.trim(),
+          money_burned: f.burnedMoney.trim(),
+          team_size: teamSizeCount[f.teamSize] ?? 0,
+          lifespan: survivalTimeMonths[f.survivalTime] ?? 0,
+        });
+      }
+      setSubmitted(true);
+    } catch (err) {
+      setErrors({ submit: err instanceof Error ? err.message : '提交失败，请稍后重试' });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   /* ---------- success state ---------- */
@@ -755,16 +804,23 @@ export default function Submit() {
                   ) : (
                     <button
                       onClick={handleSubmit}
+                      disabled={submitting}
                       className={`px-8 py-3 text-sm font-bold rounded-full transition-all hover:scale-[1.02] ${
                         mode === 'idea'
                           ? 'bg-[#2C6E63] text-[#FAF6F1]'
                           : 'bg-[#16423C] text-[#FAF6F1]'
-                      }`}
+                      } ${submitting ? 'opacity-60 cursor-not-allowed' : ''}`}
                     >
-                      {mode === 'idea' ? '把点子扔到墙上' : '安葬这个项目'}
+                      {submitting ? '提交中…' : mode === 'idea' ? '把点子扔到墙上' : '安葬这个项目'}
                     </button>
                   )}
                 </div>
+                {errors.submit && (
+                  <p className="mt-3 text-xs text-[#8B2942] flex items-center justify-end gap-1">
+                    <AlertCircle size={12} />
+                    {errors.submit}
+                  </p>
+                )}
               </div>
 
               {/* ========== Guidelines Accordion ========== */}

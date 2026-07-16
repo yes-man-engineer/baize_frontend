@@ -1,12 +1,42 @@
 // API client for Baize backend
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 
-async function api<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`);
+async function api<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, init);
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   const data = await res.json();
   if (data.code !== 0) throw new Error(data.message || 'API error');
   return data.data as T;
+}
+
+function post<T>(path: string, body: unknown): Promise<T> {
+  return api<T>(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+export interface CreateIdeaInput {
+  title: string;
+  category: string;
+  description: string;
+  author?: string;
+  startup_cost?: number;
+  image?: string;
+}
+
+export interface CreateFailureInput {
+  title: string;
+  company_name?: string;
+  category: string;
+  story: string;
+  lesson?: string;
+  startup_cost?: number;
+  money_burned?: string;
+  team_size?: number;
+  lifespan?: number;
+  image?: string;
 }
 
 export interface IdeaItem {
@@ -79,4 +109,6 @@ export const apiClient = {
   failures: (params?: string) => api<PageData<FailureItem>>(`/api/v1/failures${params || ''}`),
   ongoing: (params?: string) => api<PageData<OngoingItem>>(`/api/v1/ongoing${params || ''}`),
   posts: (params?: string) => api<PageData<PostItem>>(`/api/v1/posts${params || ''}`),
+  createIdea: (input: CreateIdeaInput) => post<IdeaItem>('/api/v1/ideas', input),
+  createFailure: (input: CreateFailureInput) => post<FailureItem>('/api/v1/failures', input),
 };
