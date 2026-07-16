@@ -6,6 +6,7 @@ const navLinks = [
   { label: '首页', path: '/' },
   { label: '点子墙', path: '/ideas' },
   { label: '失败档案', path: '/failures' },
+  { label: '在途项目', path: '/ongoing' },
   { label: '数据洞察', path: '/insights' },
   { label: '社区', path: '/community' },
 ];

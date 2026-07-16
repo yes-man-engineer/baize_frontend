@@ -270,6 +270,7 @@ function HeroSection() {
               className="hero-cta1 inline-flex items-center gap-2 px-5 py-2.5 bg-white/20 backdrop-blur-sm text-white rounded-full font-bold text-sm opacity-0 transition-all duration-300 hover:bg-white/30 border border-white/30 drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]"
             >
               <span>找灵感</span>
+              <ArrowRight size={14} />
             </Link>
             <Link
               to="/failures"
