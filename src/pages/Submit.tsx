@@ -149,9 +149,7 @@ interface IdeaForm {
   detail: string;
   businessModel: string;
   helpNeeded: string;
-  nickname: string;
   anonymous: boolean;
-  agreed: boolean;
 }
 
 interface FailureForm {
@@ -166,17 +164,15 @@ interface FailureForm {
   biggestExpense: string;
   wouldDoDifferent: string;
   advice: string;
-  nickname: string;
   anonymous: boolean;
-  agreed: boolean;
 }
 
 const defaultIdea: IdeaForm = {
-  title: '', industry: '', targetUser: '', oneLiner: '', detail: '', businessModel: '', helpNeeded: '', nickname: '', anonymous: false, agreed: false,
+  title: '', industry: '', targetUser: '', oneLiner: '', detail: '', businessModel: '', helpNeeded: '', anonymous: false,
 };
 
 const defaultFailure: FailureForm = {
-  projectName: '', industry: '', survivalTime: '', burnedMoney: '', teamSize: '', projectIntro: '', failureStory: '', topLesson: '', biggestExpense: '', wouldDoDifferent: '', advice: '', nickname: '', anonymous: true, agreed: false,
+  projectName: '', industry: '', survivalTime: '', burnedMoney: '', teamSize: '', projectIntro: '', failureStory: '', topLesson: '', biggestExpense: '', wouldDoDifferent: '', advice: '', anonymous: true,
 };
 
 /* ---------- main page ---------- */
@@ -208,7 +204,6 @@ export default function Submit() {
         if (!ideaForm.targetUser.trim()) newErrors.targetUser = '请输入目标用户';
         if (!ideaForm.oneLiner.trim()) newErrors.oneLiner = '请输入描述';
       }
-      if (step === 3 && !ideaForm.agreed) newErrors.agreed = '请确认原创声明';
     } else {
       if (step === 1) {
         if (!failureForm.projectName.trim()) newErrors.projectName = '请输入项目名称';
@@ -220,7 +215,6 @@ export default function Submit() {
         if (!failureForm.failureStory.trim()) newErrors.failureStory = '请输入失败经过';
         if (!failureForm.topLesson.trim()) newErrors.topLesson = '请输入最痛的教训';
       }
-      if (step === 4 && !failureForm.agreed) newErrors.agreed = '请确认声明';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -249,7 +243,7 @@ export default function Submit() {
           title: f.title.trim(),
           category: f.industry,
           description: [f.oneLiner.trim(), f.detail.trim(), extras.join('\n')].filter(Boolean).join('\n\n'),
-          author: f.anonymous ? '匿名用户' : f.nickname.trim() || '匿名用户',
+          author: '匿名用户',
         });
       } else {
         const f = failureForm;
@@ -554,14 +548,6 @@ export default function Submit() {
                           <h3 className="text-lg font-bold text-[#1A1A1A] mb-6" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
                             提交
                           </h3>
-                          <div>
-                            <FieldLabel>昵称</FieldLabel>
-                            <TextInput
-                              placeholder="你的昵称（可选）"
-                              value={ideaForm.nickname}
-                              onChange={(v) => setIdeaForm({ ...ideaForm, nickname: v })}
-                            />
-                          </div>
                           <div className="flex items-center gap-2">
                             <input
                               type="checkbox"
@@ -574,19 +560,6 @@ export default function Submit() {
                               匿名发布
                             </label>
                           </div>
-                          <div className="flex items-start gap-2">
-                            <input
-                              type="checkbox"
-                              id="idea-agree"
-                              checked={ideaForm.agreed}
-                              onChange={(e) => setIdeaForm({ ...ideaForm, agreed: e.target.checked })}
-                              className="w-4 h-4 mt-0.5 rounded border-[rgba(22,66,60,0.2)] accent-[#2C6E63]"
-                            />
-                            <label htmlFor="idea-agree" className="text-xs text-[#6B6B6B] leading-relaxed" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
-                              我确认这个想法是我原创的，或者我有权利分享它。
-                            </label>
-                          </div>
-                          {errors.agreed && <p className="text-xs text-[#8B2942] flex items-center gap-1"><AlertCircle size={12} />{errors.agreed}</p>}
                         </div>
                       )}
                     </motion.div>
@@ -742,14 +715,6 @@ export default function Submit() {
                           <h3 className="text-lg font-bold text-[#1A1A1A] mb-6" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
                             教训总结
                           </h3>
-                          <div>
-                            <FieldLabel>昵称</FieldLabel>
-                            <TextInput
-                              placeholder="你的昵称（可选，支持匿名）"
-                              value={failureForm.nickname}
-                              onChange={(v) => setFailureForm({ ...failureForm, nickname: v })}
-                            />
-                          </div>
                           <div className="flex items-center gap-2">
                             <input
                               type="checkbox"
@@ -762,19 +727,6 @@ export default function Submit() {
                               匿名发布我的墓志铭
                             </label>
                           </div>
-                          <div className="flex items-start gap-2">
-                            <input
-                              type="checkbox"
-                              id="fail-agree"
-                              checked={failureForm.agreed}
-                              onChange={(e) => setFailureForm({ ...failureForm, agreed: e.target.checked })}
-                              className="w-4 h-4 mt-0.5 rounded border-[rgba(22,66,60,0.2)] accent-[#16423C]"
-                            />
-                            <label htmlFor="fail-agree" className="text-xs text-[#6B6B6B] leading-relaxed" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
-                              我确认以上信息真实准确。我愿意让这段经历帮助其他人少走弯路。
-                            </label>
-                          </div>
-                          {errors.agreed && <p className="text-xs text-[#8B2942] flex items-center gap-1"><AlertCircle size={12} />{errors.agreed}</p>}
                         </div>
                       )}
                     </motion.div>
