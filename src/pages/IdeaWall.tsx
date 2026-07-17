@@ -86,6 +86,7 @@ const cardVariant = {
   },
   exit: {
     opacity: 0,
+    pointerEvents: 'none',
     transition: { duration: 0.2 },
   },
 };
@@ -360,7 +361,7 @@ export default function IdeaWall() {
           )}
 
           {!loading && !error && (
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               <motion.div
                 key={activeCategory + searchQuery}
                 variants={staggerContainer}
