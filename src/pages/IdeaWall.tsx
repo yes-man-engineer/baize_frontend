@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MessageCircle, Heart, ArrowDown } from 'lucide-react';
 import { apiClient } from '../api/client';
@@ -95,6 +95,7 @@ const cardVariant = {
 /* ------------------------------------------------------------------ */
 
 export default function IdeaWall() {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('全部');
   const [activeFunding, setActiveFunding] = useState('全部资金');
   const [searchQuery, setSearchQuery] = useState('');
@@ -372,6 +373,7 @@ export default function IdeaWall() {
                   <motion.div
                     key={idea.id}
                     variants={cardVariant}
+                    onClick={() => navigate(`/ideas/${idea.id}`)}
                     className="group bg-[#F3EDE4] border border-[rgba(22,66,60,0.1)] rounded-2xl p-5 cursor-pointer transition-all duration-[400ms] hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(22,66,60,0.12)] flex flex-col"
                     style={{ transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)' }}
                   >

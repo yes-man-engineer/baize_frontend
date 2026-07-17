@@ -9,6 +9,7 @@ import Community from './pages/Community'
 import Submit from './pages/Submit'
 import About from './pages/About'
 import OngoingProjects from './pages/OngoingProjects'
+import IdeaDetail from './pages/IdeaDetail'
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/ideas" element={<IdeaWall />} />
+        <Route path="/ideas/:id" element={<IdeaDetail />} />
         <Route path="/failures" element={<FailureArchive />} />
         <Route path="/failures/:slug" element={<FailureDetail />} />
         <Route path="/ongoing" element={<OngoingProjects />} />

@@ -106,6 +106,7 @@ export interface PageData<T> {
 
 export const apiClient = {
   ideas: (params?: string) => api<PageData<IdeaItem>>(`/api/v1/ideas${params || ''}`),
+  ideaById: (id: number | string) => api<IdeaItem>(`/api/v1/ideas/${id}`),
   failures: (params?: string) => api<PageData<FailureItem>>(`/api/v1/failures${params || ''}`),
   ongoing: (params?: string) => api<PageData<OngoingItem>>(`/api/v1/ongoing${params || ''}`),
   posts: (params?: string) => api<PageData<PostItem>>(`/api/v1/posts${params || ''}`),
