@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MessageCircle, Heart, Lightbulb, Share2 } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Heart, Lightbulb, Share2, Trash2 } from 'lucide-react';
 import { apiClient, type IdeaItem } from '../api/client';
 
 const easeOutExpo = [0.16, 1, 0.3, 1] as [number, number, number, number];
@@ -26,6 +26,19 @@ export default function IdeaDetail() {
   const [idea, setIdea] = useState<IdeaItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    if (!id || !window.confirm('确定要删除这个点子吗？此操作不可撤销。')) return;
+    setDeleting(true);
+    try {
+      await apiClient.deleteIdea(id);
+      window.location.href = '/ideas';
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '删除失败');
+      setDeleting(false);
+    }
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -130,14 +143,55 @@ export default function IdeaDetail() {
               </div>
             )}
 
-            {/* Description */}
-            <div className="prose max-w-none">
-              <p
-                className="text-[15px] text-[#1A1A1A]/85 leading-[1.8] whitespace-pre-wrap"
-                style={{ fontFamily: '"Noto Sans SC", sans-serif' }}
-              >
-                {idea.description}
-              </p>
+            {/* Structured fields */}
+            <div className="space-y-6">
+              {idea.target_user && (
+                <div>
+                  <h3 className="text-sm font-bold text-[#1A1A1A] mb-2 flex items-center gap-2" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
+                    <span className="w-6 h-6 rounded-full bg-[#2C6E63]/10 text-[#2C6E63] flex items-center justify-center text-[11px]">1</span>
+                    目标用户
+                  </h3>
+                  <p className="text-[15px] text-[#1A1A1A]/85 leading-[1.8] pl-8" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
+                    {idea.target_user}
+                  </p>
+                </div>
+              )}
+
+              {idea.description && (
+                <div>
+                  <h3 className="text-sm font-bold text-[#1A1A1A] mb-2 flex items-center gap-2" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
+                    <span className="w-6 h-6 rounded-full bg-[#2C6E63]/10 text-[#2C6E63] flex items-center justify-center text-[11px]">2</span>
+                    详细描述
+                  </h3>
+                  <p className="text-[15px] text-[#1A1A1A]/85 leading-[1.8] whitespace-pre-wrap pl-8" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
+                    {idea.description}
+                  </p>
+                </div>
+              )}
+
+              {idea.business_model && (
+                <div>
+                  <h3 className="text-sm font-bold text-[#1A1A1A] mb-2 flex items-center gap-2" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
+                    <span className="w-6 h-6 rounded-full bg-[#2C6E63]/10 text-[#2C6E63] flex items-center justify-center text-[11px]">3</span>
+                    商业模式
+                  </h3>
+                  <p className="text-[15px] text-[#1A1A1A]/85 leading-[1.8] pl-8" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
+                    {idea.business_model}
+                  </p>
+                </div>
+              )}
+
+              {idea.help_needed && (
+                <div>
+                  <h3 className="text-sm font-bold text-[#1A1A1A] mb-2 flex items-center gap-2" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
+                    <span className="w-6 h-6 rounded-full bg-[#2C6E63]/10 text-[#2C6E63] flex items-center justify-center text-[11px]">4</span>
+                    需要的帮助
+                  </h3>
+                  <p className="text-[15px] text-[#1A1A1A]/85 leading-[1.8] pl-8" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
+                    {idea.help_needed}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Stats bar */}
@@ -152,10 +206,20 @@ export default function IdeaDetail() {
                   <span>{idea.comments}</span>
                 </button>
               </div>
-              <button className="flex items-center gap-1.5 text-[13px] text-[#6B6B6B] hover:text-[#2C6E63] transition-colors">
-                <Share2 size={14} />
-                分享
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex items-center gap-1.5 text-[13px] text-[#8B2942] hover:text-[#6B1E2E] transition-colors disabled:opacity-40"
+                >
+                  <Trash2 size={14} />
+                  {deleting ? '删除中…' : '删除'}
+                </button>
+                <button className="flex items-center gap-1.5 text-[13px] text-[#6B6B6B] hover:text-[#2C6E63] transition-colors">
+                  <Share2 size={14} />
+                  分享
+                </button>
+              </div>
             </div>
           </motion.div>
 

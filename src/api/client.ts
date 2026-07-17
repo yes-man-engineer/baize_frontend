@@ -17,6 +17,10 @@ function post<T>(path: string, body: unknown): Promise<T> {
   });
 }
 
+function del<T>(path: string): Promise<T> {
+  return api<T>(path, { method: 'DELETE' });
+}
+
 export interface CreateIdeaInput {
   title: string;
   category: string;
@@ -24,6 +28,9 @@ export interface CreateIdeaInput {
   author?: string;
   startup_cost?: number;
   image?: string;
+  target_user?: string;
+  business_model?: string;
+  help_needed?: string;
 }
 
 export interface CreateFailureInput {
@@ -46,6 +53,9 @@ export interface IdeaItem {
   description: string;
   author: string;
   startup_cost: number;
+  target_user: string;
+  business_model: string;
+  help_needed: string;
   likes: number;
   comments: number;
   status: string;
@@ -110,6 +120,7 @@ export const apiClient = {
   failures: (params?: string) => api<PageData<FailureItem>>(`/api/v1/failures${params || ''}`),
   ongoing: (params?: string) => api<PageData<OngoingItem>>(`/api/v1/ongoing${params || ''}`),
   posts: (params?: string) => api<PageData<PostItem>>(`/api/v1/posts${params || ''}`),
+  deleteIdea: (id: number | string) => del<{ message: string }>(`/api/v1/ideas/${id}`),
   createIdea: (input: CreateIdeaInput) => post<IdeaItem>('/api/v1/ideas', input),
   createFailure: (input: CreateFailureInput) => post<FailureItem>('/api/v1/failures', input),
 };

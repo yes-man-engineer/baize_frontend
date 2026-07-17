@@ -234,16 +234,14 @@ export default function Submit() {
     try {
       if (mode === 'idea') {
         const f = ideaForm;
-        const extras = [
-          f.targetUser.trim() && `目标用户：${f.targetUser.trim()}`,
-          f.businessModel.trim() && `商业模式：${f.businessModel.trim()}`,
-          f.helpNeeded.trim() && `需要的帮助：${f.helpNeeded.trim()}`,
-        ].filter(Boolean);
         await apiClient.createIdea({
           title: f.title.trim(),
           category: f.industry,
-          description: [f.oneLiner.trim(), f.detail.trim(), extras.join('\n')].filter(Boolean).join('\n\n'),
+          description: [f.oneLiner.trim(), f.detail.trim()].filter(Boolean).join('\n\n'),
           author: '匿名用户',
+          target_user: f.targetUser.trim(),
+          business_model: f.businessModel.trim(),
+          help_needed: f.helpNeeded.trim(),
         });
       } else {
         const f = failureForm;
@@ -271,6 +269,7 @@ export default function Submit() {
     }
   }
 
+  /* ---------- success state ---------- */
   /* ---------- success state ---------- */
   if (submitted) {
     return (
