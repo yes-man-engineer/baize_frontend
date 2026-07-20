@@ -237,7 +237,8 @@ export default function Submit() {
         await apiClient.createIdea({
           title: f.title.trim(),
           category: f.industry,
-          description: [f.oneLiner.trim(), f.detail.trim()].filter(Boolean).join('\n\n'),
+          one_liner: f.oneLiner.trim(),
+          description: f.detail.trim(),
           author: '匿名用户',
           target_user: f.targetUser.trim(),
           business_model: f.businessModel.trim(),

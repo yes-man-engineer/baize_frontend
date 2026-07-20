@@ -24,6 +24,7 @@ function del<T>(path: string): Promise<T> {
 export interface CreateIdeaInput {
   title: string;
   category: string;
+  one_liner?: string;
   description: string;
   author?: string;
   startup_cost?: number;
@@ -50,6 +51,7 @@ export interface IdeaItem {
   id: number;
   title: string;
   category: string;
+  one_liner: string;
   description: string;
   author: string;
   startup_cost: number;

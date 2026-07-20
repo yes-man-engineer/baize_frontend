@@ -157,47 +157,34 @@ export default function IdeaDetail() {
                 </div>
               )}
 
+              {idea.one_liner && (
+                <div>
+                  <h3 className="text-sm font-bold text-[#1A1A1A] mb-2 flex items-center gap-2" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
+                    <span className="w-6 h-6 rounded-full bg-[#2C6E63]/10 text-[#2C6E63] flex items-center justify-center text-[11px]">2</span>
+                    一句话描述
+                  </h3>
+                  <p className="text-[15px] text-[#1A1A1A]/85 leading-[1.8] pl-8" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
+                    {idea.one_liner}
+                  </p>
+                </div>
+              )}
+
               {idea.description && (
-                <>
-                  {(idea.description.includes('\n\n') ? idea.description.split('\n\n') : [idea.description]).length > 1 ? (
-                    <>
-                      <div>
-                        <h3 className="text-sm font-bold text-[#1A1A1A] mb-2 flex items-center gap-2" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
-                          <span className="w-6 h-6 rounded-full bg-[#2C6E63]/10 text-[#2C6E63] flex items-center justify-center text-[11px]">2</span>
-                          一句话描述
-                        </h3>
-                        <p className="text-[15px] text-[#1A1A1A]/85 leading-[1.8] pl-8" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
-                          {idea.description.split('\n\n')[0]}
-                        </p>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-[#1A1A1A] mb-2 flex items-center gap-2" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
-                          <span className="w-6 h-6 rounded-full bg-[#2C6E63]/10 text-[#2C6E63] flex items-center justify-center text-[11px]">3</span>
-                          详细描述
-                        </h3>
-                        <p className="text-[15px] text-[#1A1A1A]/85 leading-[1.8] whitespace-pre-wrap pl-8" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
-                          {idea.description.split('\n\n').slice(1).join('\n\n')}
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <div>
-                      <h3 className="text-sm font-bold text-[#1A1A1A] mb-2 flex items-center gap-2" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
-                        <span className="w-6 h-6 rounded-full bg-[#2C6E63]/10 text-[#2C6E63] flex items-center justify-center text-[11px]">2</span>
-                        详细描述
-                      </h3>
-                      <p className="text-[15px] text-[#1A1A1A]/85 leading-[1.8] whitespace-pre-wrap pl-8" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
-                        {idea.description}
-                      </p>
-                    </div>
-                  )}
-                </>
+                <div>
+                  <h3 className="text-sm font-bold text-[#1A1A1A] mb-2 flex items-center gap-2" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
+                    <span className="w-6 h-6 rounded-full bg-[#2C6E63]/10 text-[#2C6E63] flex items-center justify-center text-[11px]">3</span>
+                    详细描述
+                  </h3>
+                  <p className="text-[15px] text-[#1A1A1A]/85 leading-[1.8] whitespace-pre-wrap pl-8" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
+                    {idea.description}
+                  </p>
+                </div>
               )}
 
               {idea.business_model && (
                 <div>
                   <h3 className="text-sm font-bold text-[#1A1A1A] mb-2 flex items-center gap-2" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
-                    <span className="w-6 h-6 rounded-full bg-[#2C6E63]/10 text-[#2C6E63] flex items-center justify-center text-[11px]">{idea.description.includes('\n\n') ? '4' : '3'}</span>
+                    <span className="w-6 h-6 rounded-full bg-[#2C6E63]/10 text-[#2C6E63] flex items-center justify-center text-[11px]">4</span>
                     商业模式
                   </h3>
                   <p className="text-[15px] text-[#1A1A1A]/85 leading-[1.8] pl-8" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
@@ -209,7 +196,7 @@ export default function IdeaDetail() {
               {idea.help_needed && (
                 <div>
                   <h3 className="text-sm font-bold text-[#1A1A1A] mb-2 flex items-center gap-2" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
-                    <span className="w-6 h-6 rounded-full bg-[#2C6E63]/10 text-[#2C6E63] flex items-center justify-center text-[11px]">{idea.description.includes('\n\n') ? '5' : '4'}</span>
+                    <span className="w-6 h-6 rounded-full bg-[#2C6E63]/10 text-[#2C6E63] flex items-center justify-center text-[11px]">5</span>
                     需要什么样的帮助
                   </h3>
                   <p className="text-[15px] text-[#1A1A1A]/85 leading-[1.8] pl-8" style={{ fontFamily: '"Noto Sans SC", sans-serif' }}>
