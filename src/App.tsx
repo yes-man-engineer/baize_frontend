@@ -1,3 +1,13 @@
+import { Navigate, Route, Routes } from "react-router-dom"
+import HomePage from "@/pages/HomePage"
+import ProjectPage from "@/pages/ProjectPage"
+
 export default function App() {
-  return <h1>hello</h1>
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/p/:token" element={<ProjectPage />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
 }
