@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import type { ButtonHTMLAttributes, ReactNode } from "react"
 
 type Variant = "primary" | "secondary" | "ghost" | "danger"
@@ -34,6 +35,27 @@ export function Spinner({ className = "size-5" }: { className?: string }) {
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
     </svg>
+  )
+}
+
+/**
+ * Thinking 模型在想的时候显示，带已用秒数。
+ * 加计时器是因为这里要等十几到几十秒，没有数字的话用户不知道是卡了还是在跑。
+ */
+export function Thinking({ label }: { label: string }) {
+  const [seconds, setSeconds] = useState(0)
+
+  useEffect(() => {
+    const timer = setInterval(() => setSeconds((n) => n + 1), 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  return (
+    <div className="flex items-center gap-2 text-sm text-stone-400">
+      <Spinner className="size-4" />
+      {label}
+      <span className="tabular-nums">已思考 {seconds} 秒</span>
+    </div>
   )
 }
 

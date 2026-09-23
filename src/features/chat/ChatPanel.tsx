@@ -1,34 +1,37 @@
 import { useEffect, useRef, useState } from "react"
 import type { Message, ProjectDetail } from "@/api/types"
-import { Button, ErrorNote, Spinner } from "@/components/ui"
+import { Button, ErrorNote, Thinking } from "@/components/ui"
 
 interface Props {
   detail: ProjectDetail
+  /** 正在等开场白。开场白由对话页单独去要，等待也显示在这里。 */
+  waitingOpening: boolean
   onAnswer: (content: string) => Promise<void>
   onGeneratePaths: () => Promise<void>
   onGeneratePlan: () => Promise<void>
   actionError: string | null
 }
 
-export default function ChatPanel({ detail, onAnswer, onGeneratePaths, onGeneratePlan, actionError }: Props) {
+export default function ChatPanel({ detail, waitingOpening, onAnswer, onGeneratePaths, onGeneratePlan, actionError }: Props) {
   const { project, messages, next_action } = detail
   const scouting = project.status === "scouting"
   const [draft, setDraft] = useState("")
   const [sending, setSending] = useState(false)
+  const thinking = sending || waitingOpening
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
-  }, [messages.length, sending, next_action])
+  }, [messages.length, thinking, next_action])
 
   useEffect(() => {
-    if (!sending) inputRef.current?.focus()
-  }, [sending])
+    if (!thinking) inputRef.current?.focus()
+  }, [thinking])
 
   async function send() {
     const content = draft.trim()
-    if (!content || sending) return
+    if (!content || thinking) return
     setSending(true)
     setDraft("")
     try {
@@ -45,7 +48,7 @@ export default function ChatPanel({ detail, onAnswer, onGeneratePaths, onGenerat
   const enoughLabel = scouting ? "够了，直接看能走哪几条路" : "够了，先给我方案"
 
   // 模型判断问得差不多了：不再显示输入框，换成一个明确的下一步
-  const modelDone = next_action !== "ask"
+  const modelDone = next_action !== "ask" && next_action !== "opening"
 
   return (
     <div className="mx-auto flex h-[calc(100vh-41px)] w-full max-w-3xl flex-col">
@@ -61,12 +64,8 @@ export default function ChatPanel({ detail, onAnswer, onGeneratePaths, onGenerat
 
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-5 sm:px-6">
         {messages.map((m) => <Bubble key={m.id} message={m} />)}
-        {sending && (
-          <div className="flex items-center gap-2 text-sm text-stone-400">
-            <Spinner className="size-4" /> 在想下一个问题……
-          </div>
-        )}
-        {modelDone && !sending && (
+        {thinking && <Thinking label={waitingOpening ? "在看你说的这件事……" : "在想下一个问题……"} />}
+        {modelDone && !thinking && (
           <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
             <p className="text-sm text-stone-800">
               {next_action === "paths"
@@ -96,11 +95,11 @@ export default function ChatPanel({ detail, onAnswer, onGeneratePaths, onGenerat
                 }
               }}
               rows={1}
-              disabled={sending}
+              disabled={thinking}
               placeholder="直接说，不用想措辞。Enter 发送，Shift+Enter 换行"
               className="max-h-40 min-h-[42px] flex-1 resize-none rounded-lg border border-stone-300 px-3 py-2 text-base outline-none focus:border-stone-500 disabled:bg-stone-50"
             />
-            <Button onClick={send} disabled={!draft.trim() || sending}>
+            <Button onClick={send} disabled={!draft.trim() || thinking}>
               发送
             </Button>
           </div>
@@ -109,7 +108,7 @@ export default function ChatPanel({ detail, onAnswer, onGeneratePaths, onGenerat
         <div className="mt-2 flex items-center justify-between gap-3">
           <span className="text-xs text-stone-400">已聊 {project.asked_count} 轮 · 不用答完，随时可以停</span>
           {!modelDone && (
-            <Button variant="secondary" className="px-3 py-1.5 text-xs" onClick={enough} disabled={sending}>
+            <Button variant="secondary" className="px-3 py-1.5 text-xs" onClick={enough} disabled={thinking}>
               {enoughLabel} →
             </Button>
           )}

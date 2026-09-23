@@ -2,6 +2,7 @@ import { request } from "./client"
 import type {
   AnswerResult,
   CreateResult,
+  OpeningResult,
   PathsResult,
   Project,
   ProjectDetail,
@@ -13,6 +14,11 @@ const p = (token: string) => `/projects/${encodeURIComponent(token)}`
 /** 开新项目。idea 留空即入口 B（不知道做什么，先盘点）。 */
 export function createProject(idea?: string) {
   return request<CreateResult>("POST", "/projects", { idea: idea?.trim() ?? "" })
+}
+
+/** 开场白单独要，因为要等模型十几秒。重复调只会拿到同一句，不会重复生成。 */
+export function fetchOpening(token: string) {
+  return request<OpeningResult>("POST", `${p(token)}/opening`)
 }
 
 /** 一次拿全，刷新页面用这个。 */

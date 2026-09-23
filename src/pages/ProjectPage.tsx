@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom"
 import { ApiError, errorMessage } from "@/api/client"
 import {
   endProject,
+  fetchOpening,
   generatePaths,
   generatePlan,
   getProject,
@@ -40,6 +41,7 @@ export default function ProjectPage() {
   const [notFound, setNotFound] = useState(false)
   const [busy, setBusy] = useState<Busy>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [waitingOpening, setWaitingOpening] = useState(false)
 
   const load = useCallback(async () => {
     setLoadError(null)
@@ -55,6 +57,27 @@ export default function ProjectPage() {
   useEffect(() => {
     void load()
   }, [load])
+
+  // 建项目时没生成开场白（要等模型十几秒），落地之后再去要。
+  useEffect(() => {
+    if (detail?.next_action !== "opening" || waitingOpening) return
+    setWaitingOpening(true)
+    void (async () => {
+      try {
+        const res = await fetchOpening(token)
+        setDetail((d) => d && {
+          ...d,
+          project: res.project,
+          messages: [...d.messages, localMessage("assistant", res.question)],
+          next_action: res.next_action,
+        })
+      } catch (e) {
+        setActionError(errorMessage(e))
+      } finally {
+        setWaitingOpening(false)
+      }
+    })()
+  }, [detail?.next_action, waitingOpening, token])
 
   // ---- 对话 ----
   async function handleAnswer(content: string) {
@@ -194,6 +217,7 @@ export default function ProjectPage() {
       ) : (
         <ChatPanel
           detail={detail}
+          waitingOpening={waitingOpening}
           onAnswer={handleAnswer}
           onGeneratePaths={handleGeneratePaths}
           onGeneratePlan={handleGeneratePlan}

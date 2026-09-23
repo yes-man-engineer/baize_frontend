@@ -1,6 +1,6 @@
 // 与后端 internal/model、internal/service 的 JSON 一一对应
 
-export type NextAction = "ask" | "paths" | "plan"
+export type NextAction = "opening" | "ask" | "paths" | "plan"
 export type ProjectStatus = "scouting" | "choosing" | "interviewing" | "planned" | "ended"
 export type Entry = "A" | "B"
 export type Verdict = "" | "go" | "stop"
@@ -15,7 +15,7 @@ export interface Project {
   entry: Entry
   idea: string
   city: string
-  /** 最多能亏多少钱（元），-1 表示还没问到 */
+  /** 打算投入的预算（元），-1 表示还没问到 */
   risk_budget: number
   /** 每周能投入几小时，-1 表示还没问到 */
   weekly_hours: number
@@ -90,7 +90,13 @@ export interface ProjectDetail {
   next_action: NextAction
 }
 
+/** 建项目只落库，不生成开场白，所以没有 question。next_action 恒为 opening。 */
 export interface CreateResult {
+  project: Project
+  next_action: NextAction
+}
+
+export interface OpeningResult {
   project: Project
   question: string
   next_action: NextAction
