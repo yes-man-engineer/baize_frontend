@@ -1,25 +1,26 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { createProject } from "@/api/projects"
+import { startProject } from "@/api/projects"
 import { errorMessage } from "@/api/client"
 import { Button, ErrorNote, Page } from "@/components/ui"
 
 export default function HomePage() {
   const navigate = useNavigate()
-  const [idea, setIdea] = useState("")
-  const [busy, setBusy] = useState<"A" | "B" | null>(null)
+  const [draft, setDraft] = useState("")
+  const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function start(entry: "A" | "B") {
-    if (entry === "A" && !idea.trim()) return
-    setBusy(entry)
+  async function start() {
+    const content = draft.trim()
+    if (!content || busy) return
+    setBusy(true)
     setError(null)
     try {
-      const res = await createProject(entry === "A" ? idea : "")
-      navigate(`/p/${res.project.token}`)
+      const detail = await startProject(content)
+      navigate(`/p/${detail.project.id}`)
     } catch (e) {
       setError(errorMessage(e))
-      setBusy(null)
+      setBusy(false)
     }
   }
 
@@ -34,52 +35,36 @@ export default function HomePage() {
         </p>
       </header>
 
+      {/* 只有一个入口。有没有想好要做什么，让模型从这句话里自己看，
+          前端不做分支，也不逼用户先给自己归类。 */}
       <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
-        <label htmlFor="idea" className="block text-sm font-medium text-stone-800">
-          我有个想法
+        <label htmlFor="draft" className="block text-sm font-medium text-stone-800">
+          说说你的情况
         </label>
         <textarea
-          id="idea"
-          value={idea}
-          onChange={(e) => setIdea(e.target.value)}
+          id="draft"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
+            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault()
-              void start("A")
+              void start()
             }
           }}
           rows={3}
           maxLength={500}
-          placeholder="比如：想去夜市卖烧烤 / 想在小区门口做早餐 / 想接点剪视频的活"
+          placeholder="比如：想去夜市卖烧烤 / 想在小区门口做早餐 / 手头有点闲钱和时间，还不知道能干点啥"
           className="mt-2 w-full resize-none rounded-lg border border-stone-300 px-3 py-2 text-base outline-none focus:border-stone-500"
         />
         <div className="mt-3 flex items-center justify-between gap-3">
-          <span className="text-xs text-stone-400">一句话就行，说不清也没关系，后面会问</span>
-          <Button onClick={() => start("A")} loading={busy === "A"} disabled={!idea.trim() || busy !== null}>
+          <span className="text-xs text-stone-400">想好了没都行，说不清后面会问</span>
+          <Button onClick={() => void start()} loading={busy} disabled={!draft.trim() || busy}>
             开始
           </Button>
         </div>
       </section>
 
-      <div className="my-6 flex items-center gap-3 text-xs text-stone-400">
-        <span className="h-px flex-1 bg-stone-200" />
-        或者
-        <span className="h-px flex-1 bg-stone-200" />
-      </div>
-
-      <section className="rounded-2xl border border-dashed border-stone-300 p-5">
-        <p className="text-sm font-medium text-stone-800">我还不知道能做什么</p>
-        <p className="mt-1 text-sm text-stone-600">
-          先盘点你手上现成有什么——做过什么、别人常找你帮什么忙、家里有什么——再给你三条能走的路。
-        </p>
-        <Button variant="secondary" className="mt-3" onClick={() => start("B")} loading={busy === "B"} disabled={busy !== null}>
-          先盘点一下
-        </Button>
-      </section>
-
-      <div className="mt-4">
-        <ErrorNote message={error} />
-      </div>
+      <ErrorNote message={error} />
     </Page>
   )
 }

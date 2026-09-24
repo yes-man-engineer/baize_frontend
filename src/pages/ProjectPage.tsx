@@ -1,179 +1,37 @@
 import { useCallback, useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { ApiError, errorMessage } from "@/api/client"
-import {
-  endProject,
-  fetchOpening,
-  generatePaths,
-  generatePlan,
-  getProject,
-  selectPath,
-  submitAnswer,
-  verifyItem,
-} from "@/api/projects"
-import type { Message, PlanItem, ProjectDetail } from "@/api/types"
-import { BusyOverlay, Button, ErrorNote, Page, Spinner } from "@/components/ui"
-import ChatPanel from "@/features/chat/ChatPanel"
-import PathsPanel from "@/features/paths/PathsPanel"
-import PlanView from "@/features/plan/PlanView"
-
-type Busy = "paths" | "plan" | "select" | null
-
-const BUSY_TEXT: Record<NonNullable<Busy>, string> = {
-  paths: "正在根据你手上现成的东西，找三条能走的路……",
-  plan: "正在生成方案：确定的给足，猜的标黄，只有你知道的标红……",
-  select: "记下了，接着往下问……",
-}
-
-let tmpId = 0
-const localMessage = (role: Message["role"], content: string): Message => ({
-  id: `local-${++tmpId}`,
-  project_id: "",
-  role,
-  content,
-  created_at: new Date().toISOString(),
-})
+import { getProject } from "@/api/projects"
+import type { Detail, Message } from "@/api/types"
+import { Button, ErrorNote, Page, Spinner } from "@/components/ui"
 
 export default function ProjectPage() {
-  const { token = "" } = useParams()
-  const [detail, setDetail] = useState<ProjectDetail | null>(null)
+  const { id = "" } = useParams()
+  const [detail, setDetail] = useState<Detail | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [notFound, setNotFound] = useState(false)
-  const [busy, setBusy] = useState<Busy>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
-  const [waitingOpening, setWaitingOpening] = useState(false)
 
   const load = useCallback(async () => {
     setLoadError(null)
     setNotFound(false)
     try {
-      setDetail(await getProject(token))
+      setDetail(await getProject(id))
     } catch (e) {
       if (e instanceof ApiError && e.notFound) setNotFound(true)
       else setLoadError(errorMessage(e))
     }
-  }, [token])
+  }, [id])
 
   useEffect(() => {
     void load()
   }, [load])
 
-  // 建项目时没生成开场白（要等模型十几秒），落地之后再去要。
-  useEffect(() => {
-    if (detail?.next_action !== "opening" || waitingOpening) return
-    setWaitingOpening(true)
-    void (async () => {
-      try {
-        const res = await fetchOpening(token)
-        setDetail((d) => d && {
-          ...d,
-          project: res.project,
-          messages: [...d.messages, localMessage("assistant", res.question)],
-          next_action: res.next_action,
-        })
-      } catch (e) {
-        setActionError(errorMessage(e))
-      } finally {
-        setWaitingOpening(false)
-      }
-    })()
-  }, [detail?.next_action, waitingOpening, token])
-
-  // ---- 对话 ----
-  async function handleAnswer(content: string) {
-    if (!detail) return
-    setActionError(null)
-    setDetail((d) => d && { ...d, messages: [...d.messages, localMessage("user", content)] })
-    try {
-      const res = await submitAnswer(token, content)
-      setDetail((d) => {
-        if (!d) return d
-        const messages = res.question ? [...d.messages, localMessage("assistant", res.question)] : d.messages
-        return { ...d, project: res.project, messages, next_action: res.next_action }
-      })
-    } catch (e) {
-      // 回滚乐观追加的那条用户消息
-      setDetail((d) => d && { ...d, messages: d.messages.filter((m) => !m.id.startsWith("local-") || m.content !== content) })
-      setActionError(errorMessage(e))
-      throw e
-    }
-  }
-
-  async function handleGeneratePaths() {
-    setBusy("paths")
-    setActionError(null)
-    try {
-      const res = await generatePaths(token)
-      setDetail((d) => d && { ...d, project: res.project, paths: res.paths, next_action: "paths" })
-    } catch (e) {
-      setActionError(errorMessage(e))
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  async function handleGeneratePlan() {
-    setBusy("plan")
-    setActionError(null)
-    try {
-      setDetail(await generatePlan(token))
-    } catch (e) {
-      setActionError(errorMessage(e))
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  // ---- 选路 ----
-  async function handleSelectPath(pathId: string) {
-    setBusy("select")
-    setActionError(null)
-    try {
-      const res = await selectPath(token, pathId)
-      // 选路后后端会写入 user/assistant 消息，直接重拉一份最省心
-      const fresh = await getProject(token)
-      setDetail({ ...fresh, next_action: res.next_action })
-    } catch (e) {
-      setActionError(errorMessage(e))
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  // ---- 方案 ----
-  async function handleVerify(itemId: string, answer: string): Promise<PlanItem> {
-    const res = await verifyItem(token, itemId, answer)
-    setDetail((d) => {
-      if (!d) return d
-      const items = d.items.map((it) => (it.id === res.item.id ? res.item : it))
-      return {
-        ...d,
-        items,
-        tasks: items.filter((it) => it.confidence === "yellow" || it.confidence === "red"),
-        progress: res.progress,
-      }
-    })
-    return res.item
-  }
-
-  async function handleEnd() {
-    setActionError(null)
-    try {
-      const res = await endProject(token)
-      setDetail((d) => d && { ...d, project: res.project })
-    } catch (e) {
-      setActionError(errorMessage(e))
-    }
-  }
-
-  // ---- 渲染 ----
   if (notFound) {
     return (
-      <Page className="flex min-h-screen max-w-xl flex-col items-center justify-center text-center">
-        <p className="text-lg font-medium">项目不存在或链接失效</p>
-        <p className="mt-2 text-sm text-stone-500">检查一下链接有没有复制全。</p>
-        <Link to="/" className="mt-6 text-sm underline underline-offset-4">
-          重新开始
+      <Page className="flex min-h-screen max-w-2xl flex-col justify-center">
+        <p className="text-base text-stone-600">这个项目不存在，可能链接不对或者已经被清掉了。</p>
+        <Link to="/" className="mt-4 text-sm font-medium text-stone-900 underline">
+          回去重新开一个
         </Link>
       </Page>
     )
@@ -181,78 +39,64 @@ export default function ProjectPage() {
 
   if (loadError) {
     return (
-      <Page className="max-w-xl pt-20">
-        <ErrorNote message={loadError} onRetry={load} />
+      <Page className="flex min-h-screen max-w-2xl flex-col justify-center">
+        <ErrorNote message={loadError} onRetry={() => void load()} />
       </Page>
     )
   }
 
   if (!detail) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-stone-400">
+      <Page className="flex min-h-screen items-center justify-center">
         <Spinner />
-      </div>
+      </Page>
     )
   }
 
-  const { project } = detail
-  const inPlan = project.status === "planned" || project.status === "ended"
-  const inChoosing = project.status === "choosing"
+  const { project, messages } = detail
 
   return (
-    <>
-      <BusyOverlay text={busy ? BUSY_TEXT[busy] : null} />
-      <TopBar token={token} />
+    <div className="mx-auto flex h-screen w-full max-w-3xl flex-col">
+      <header className="border-b border-stone-200 px-4 pt-5 pb-4 sm:px-6">
+        <p className="text-xs font-medium tracking-wide text-stone-500 uppercase">提问</p>
+        <h1 className="mt-1 truncate text-lg font-semibold">{project.title}</h1>
+        <p className="mt-1 text-xs text-stone-500">不知道就直接说「不知道」，不会追问，会变成方案里的一项作业。</p>
+      </header>
 
-      {inPlan ? (
-        <PlanView detail={detail} onVerify={handleVerify} onEnd={handleEnd} actionError={actionError} />
-      ) : inChoosing ? (
-        <PathsPanel
-          paths={detail.paths}
-          riskBudget={project.risk_budget}
-          onSelect={handleSelectPath}
-          onGenerate={handleGeneratePaths}
-          actionError={actionError}
-        />
-      ) : (
-        <ChatPanel
-          detail={detail}
-          waitingOpening={waitingOpening}
-          onAnswer={handleAnswer}
-          onGeneratePaths={handleGeneratePaths}
-          onGeneratePlan={handleGeneratePlan}
-          actionError={actionError}
-        />
-      )}
-    </>
+      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-5 sm:px-6">
+        {messages.map((m) => (
+          <Bubble key={m.id} message={m} />
+        ))}
+      </div>
+
+      {/* 对话接口还没写。与其画一个点了没反应的输入框，不如把话说明白。 */}
+      <footer className="border-t border-stone-200 bg-white px-4 py-3 sm:px-6">
+        <div className="flex items-end gap-2">
+          <textarea
+            rows={1}
+            disabled
+            placeholder="对话接口还在写，暂时发不出去"
+            className="max-h-40 min-h-[42px] flex-1 resize-none rounded-lg border border-stone-300 bg-stone-50 px-3 py-2 text-base outline-none"
+          />
+          <Button disabled>发送</Button>
+        </div>
+      </footer>
+    </div>
   )
 }
 
-function TopBar({ token }: { token: string }) {
-  const [copied, setCopied] = useState(false)
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(window.location.href)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      window.prompt("复制这个链接，随时回来：", window.location.href)
-    }
-  }
-
+function Bubble({ message }: { message: Message }) {
+  const mine = message.role === "user"
   return (
-    <div className="border-b border-stone-200 bg-white/80 backdrop-blur">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2 sm:px-6">
-        <Link to="/" className="text-sm font-semibold tracking-tight">
-          起步方案
-        </Link>
-        <div className="flex items-center gap-2 text-xs text-stone-500">
-          <span className="hidden sm:inline">没有账号，存好链接就能回来</span>
-          <Button variant="ghost" className="px-2 py-1 text-xs" onClick={copy} title={token}>
-            {copied ? "已复制 ✓" : "复制链接"}
-          </Button>
-        </div>
+    <div className={mine ? "flex justify-end" : "flex justify-start"}>
+      <div
+        className={
+          mine
+            ? "max-w-[80%] rounded-2xl bg-stone-900 px-4 py-2.5 text-base text-white"
+            : "max-w-[80%] rounded-2xl border border-stone-200 bg-white px-4 py-2.5 text-base shadow-sm"
+        }
+      >
+        {message.content}
       </div>
     </div>
   )
