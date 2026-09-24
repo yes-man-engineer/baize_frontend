@@ -1,4 +1,4 @@
-const BASE = (import.meta.env.VITE_API_BASE ?? "/api").replace(/\/+$/, "")
+export const BASE = (import.meta.env.VITE_API_BASE ?? "/api").replace(/\/+$/, "")
 
 interface Envelope<T> {
   code: number

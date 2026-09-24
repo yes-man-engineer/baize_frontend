@@ -1,6 +1,15 @@
 // 与后端 internal/model、internal/service 的 JSON 一一对应
 
-export type ProjectStatus = "chatting" | "planned" | "ended"
+/** 和后端 model.ProjectStatus 一一对应，改一边要改另一边 */
+export type ProjectStatus =
+  /** 还在聊 */
+  | "chatting"
+  /** 该问的都问到了，可以出方案；想接着聊也行 */
+  | "ready"
+  /** 方案已生成 */
+  | "planned"
+  /** 用户主动结束 */
+  | "ended"
 export type Role = "user" | "assistant"
 
 export interface Project {
@@ -30,3 +39,12 @@ export interface Detail {
   project: Project
   messages: Message[]
 }
+
+/**
+ * 对话接口推下来的 SSE 事件，后端 handler/decorate.go 里的 sseEvent。
+ * delta 一段正文 / done 说完了 / error 出错了（HTTP 状态码已经是 200，只能这样报）
+ */
+export type ChatEvent =
+  | { type: "delta"; text: string }
+  | { type: "done"; data: { message_id: string } }
+  | { type: "error"; message: string }

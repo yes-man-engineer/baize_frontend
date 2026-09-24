@@ -3,73 +3,71 @@
 ## 这是什么
 
 「起步方案」产品的前端。配套后端仓库：`baize_backend`（同一个 GitHub 账号下），
-产品背景、核心机制和产品规则都写在那个仓库的 `CLAUDE.md` 里，**动手前先读它**。
+产品背景和技术约束写在那个仓库的 `CLAUDE.md` 里，**动手前先读它**。
 
-一句话：帮普通人把模糊的「我想做点什么」变成今晚就能开始验证的起步方案。
+一句话：帮普通人把模糊的「我想做点什么」变成可以动手验证的起步方案。
 
-## 当前状态
+**产品形态正在重新设计中。** 后端业务层 2026-09 推倒重写，目前接通了建项目、
+取详情、流式对话三个接口，界面也只做到对应的程度。不要按旧版界面的样子补功能，
+没接通的接口就是还没想清楚，不是漏做了。
 
-**空骨架**。Vite 7 + React 19 + TypeScript 5.9，就一个 hello。
-端口 3000，`@` 指向 `src`。**Tailwind 和 shadcn/ui 都没装**（原项目有，重置时按"最小骨架"清掉了），
-要用的话自己装回来。
+**范围很宽，不要往窄里收。** 创业、副业、找工作、把现在的工作做得更好，
+都在范围内，从高精尖到摆摊都算。文案和占位符里不要只举小生意的例子，
+之前整套界面都围着夜市摆摊写，是错的。
 
-## 要做的三个界面
+## 技术栈
 
-### 1. 对话页
-一问一答。后端每次返回 `next_action` 决定下一步调哪个接口：
-`ask` 继续答题 / `paths` 去选路 / `plan` 去出方案。
+Vite 7 + React 19 + TypeScript 5.9 + Tailwind 4（走 `@tailwindcss/vite`，
+不需要 config 文件）。端口 3000，`@` 指向 `src`。**没装组件库**，
+`components/ui.tsx` 是手写的几个小件，要引入 shadcn 之类的先问。
 
-输入框旁边**常驻一个「够了，先给我方案」按钮**。这个按钮不是为了让 AI 知道
-用户想停——模型从输入里就能判断——而是为了**可发现性**：很多人默认必须答完，
-不会主动说停，只会直接关页面，而沉默流失是识别不到的。
+```
+src/api/client.ts     fetch 封装，统一响应体 { code, message, data }，code: 0 成功
+src/api/types.ts      接口类型，和后端手工保持一致
+src/api/projects.ts   startProject / getProject
+src/api/chat.ts       streamReply，SSE 流式对话
+src/pages/HomePage.tsx     单一入口，输入一句话就建项目并跳转
+src/pages/ProjectPage.tsx  对话页，流式渲染
+src/components/ui.tsx      零散的基础组件
+```
 
-### 2. 候选路径页（入口 B）
-3 张卡片，`angle` 字段区分：`steady` 最稳 / `fast_cash` 最快回钱 /
-`high_ceiling` 天花板最高。每张显示 `title` / `summary` / `why_you` /
-`startup_cost` / `first_step`。选一条即合流回对话。
+## 已接通的接口
 
-### 3. 方案页 —— 文档 + 任务板双视图
-**这是产品的核心界面，也是最容易做错的地方。**
+后端默认 `http://localhost:8080`，同源部署时 `VITE_API_BASE` 写 `/api`。
 
-两个视图是**同一份数据**，不是两块独立内容：
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| POST | `/api/projects`　body `{ idea }` | 建项目，立即返回，不等模型 |
+| GET | `/api/projects/:id` | 项目详情 + 全部消息 |
 
-- **文档视图**：渲染全部 `items`，每条按 `confidence` 上色
-  （🟢 green 确定 / 🟡 yellow AI 猜的 / 🔴 red 只有你知道）
-- **任务板**：只渲染 `tasks`（后端已过滤出 yellow + red），每条显示
-  `verify_action`（今晚两小时能做完的动作），可勾选、可填 `answer`
+**没有账号体系**，project id 就是凭证，放在 URL 里（`/p/:id`），
+用户存书签就能回来。不要把它叫 token，那个词在这个项目里只指模型的计量单位。
 
-**联动是关键**：任务板回填 → 调 `verify` 接口 → 文档里对应那条变绿。
-文档顶部常驻 `progress.green_ratio` 绿色占比。
+建项目**不等模型返回**，标题从用户输入里截一段先用着。让用户对着首页的按钮
+干等二十秒，什么反馈都没有，是上一版最糟的体验。
 
-如果两个视图不联动，用户完成一项任务后感知不到任何变化，就没有做第二项的理由。
-**这个联动是"进度可见"的唯一来源。**
+## 对话是流式的
 
-另外 `project.verdict` 为 `stop` 时是劝退结论，要显眼地展示 `verdict_reason`，
-不要把它藏在方案下面——这是产品底线，不是一条普通提示。
+`POST /api/projects/:project_id/messages` 返回 SSE，事件三种：
+`delta` 一段正文 / `done` 说完了带 message_id / `error` 出错了。
 
-## 接口
+**出错也是走事件发下来的**，那时 HTTP 状态码已经是 200 了改不掉，所以
+`res.ok` 为真不代表这次成功，要等流里的 `error` 事件。
 
-后端默认 `http://localhost:8080`，需要加 `VITE_API_BASE` 配置（现在还没有）。
-统一响应体是 `{ code, message, data }`，`code: 0` 为成功。
+`content` 传空字符串表示「我没新话，你先开口」。刚建完项目时库里只有用户
+那一句没人回他，对话页会自动发一次空的。
 
-| 方法 | 路径 |
-| --- | --- |
-| POST | `/api/projects`　　body `{ idea?: string }`，留空即入口 B |
-| POST | `/api/projects/:token/answers`　body `{ content }` |
-| POST | `/api/projects/:token/paths` |
-| POST | `/api/projects/:token/paths/:id/select` |
-| POST | `/api/projects/:token/plan` |
-| GET | `/api/projects/:token`　一次拿全，刷新页面用这个 |
-| POST | `/api/projects/:token/items/:id/verify`　body `{ answer }` |
-| POST | `/api/projects/:token/end` |
+**失败时后端一条都不存**，包括用户刚发的那句。所以前端失败后要把乐观渲染
+的那条撤掉，并把原文还回输入框，否则刷新一下就对不上了。
 
-`GET /api/projects/:token` 返回 `{ project, items, tasks, paths, selected_path, messages, progress, next_action }`。
+## 还没做的
 
-**没有账号体系**，`token` 就是凭证，放在 URL 里（比如 `/p/:token`），
-用户存书签就能回来。
+方案怎么展示，等后端定下方案的形态再说。
 
 ## 部署
 
-旧项目的域名和 nginx 配置还在，只是仓库里的部署文件被清掉了。
-如果还是 nginx 同源反代（前端静态 + `/api` 转 8080），`VITE_API_BASE` 写 `/api` 即可，
-后端 CORS 也就不用管了。
+nginx 同源反代（前端静态 + `/api` 转 8080），`VITE_API_BASE` 写 `/api`，
+后端 CORS 就不用管。
+
+`index.html` 必须配 `Cache-Control: no-cache`，`/assets/` 才能长缓存。
+不配的话发版不生效，而且症状会伪装成后端的问题。详见后端仓库的部署章节。

@@ -29,7 +29,7 @@ export default function HomePage() {
       <header className="mb-10">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">起步方案</h1>
         <p className="mt-3 text-base leading-relaxed text-stone-600">
-          把模糊的「我想做点什么」，变成<span className="font-medium text-stone-900">今晚就能开始验证</span>的起步方案。
+          把模糊的「我想做点什么」，变成<span className="font-medium text-stone-900">能动手的下一步</span>。
           <br />
           不装懂：确定的给足，猜的标出来，只有你知道的交给你去核实。
         </p>
@@ -53,7 +53,7 @@ export default function HomePage() {
           }}
           rows={3}
           maxLength={500}
-          placeholder="比如：想去夜市卖烧烤 / 想在小区门口做早餐 / 手头有点闲钱和时间，还不知道能干点啥"
+          placeholder="比如：想在小区门口开个咖啡馆 / 做了三年测试想转开发 / 手上有个技术想找人一起做 / 现在这份工作干得很憋屈，不知道该怎么办"
           className="mt-2 w-full resize-none rounded-lg border border-stone-300 px-3 py-2 text-base outline-none focus:border-stone-500"
         />
         <div className="mt-3 flex items-center justify-between gap-3">
