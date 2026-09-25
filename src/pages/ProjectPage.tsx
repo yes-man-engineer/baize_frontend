@@ -16,6 +16,7 @@ export default function ProjectPage() {
   const [draft, setDraft] = useState("")
   const [pending, setPending] = useState("")
   const [streaming, setStreaming] = useState(false)
+  const [waited, setWaited] = useState(0)
   const [sendError, setSendError] = useState<string | null>(null)
 
   const bottom = useRef<HTMLDivElement>(null)
@@ -43,6 +44,16 @@ export default function ProjectPage() {
     bottom.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, pending])
 
+  // 模型出第一个字之前要等十几到几十秒，没有秒数用户分不清是在想还是挂了。
+  useEffect(() => {
+    if (!streaming) {
+      setWaited(0)
+      return
+    }
+    const timer = setInterval(() => setWaited((n) => n + 1), 1000)
+    return () => clearInterval(timer)
+  }, [streaming])
+
   const send = useCallback(
     async (content: string) => {
       if (streaming || !id) return
@@ -64,8 +75,8 @@ export default function ProjectPage() {
         setMessages((prev) => [...prev, localMessage(id, "assistant", full, replyId)])
       } catch (e) {
         setSendError(errorMessage(e))
-        // 后端失败时一条都没存，用户那句也没存。这里把乐观加的那条撤掉，
-        // 顺便把原文还回输入框，他改一改就能重发。
+        // 后端真的失败时一条都没存，用户那句也没存。把乐观加的那条撤掉，
+        // 原文还回输入框，他改一改就能重发。
         if (mine) {
           setMessages((prev) => prev.filter((m) => m.id !== mine.id))
           setDraft((d) => d || content)
@@ -126,7 +137,7 @@ export default function ProjectPage() {
           <Bubble key={m.id} role={m.role} content={m.content} />
         ))}
 
-        {streaming && <Bubble role="assistant" content={pending} typing={!pending} />}
+        {streaming && <Bubble role="assistant" content={pending} waited={pending ? 0 : waited} />}
 
         <ErrorNote message={sendError} />
         <div ref={bottom} />
@@ -168,7 +179,16 @@ export default function ProjectPage() {
   )
 }
 
-function Bubble({ role, content, typing }: { role: Message["role"]; content: string; typing?: boolean }) {
+function Bubble({
+  role,
+  content,
+  waited,
+}: {
+  role: Message["role"]
+  content: string
+  /** 大于 0 表示还没吐出第一个字，显示已经等了多久 */
+  waited?: number
+}) {
   const mine = role === "user"
   return (
     <div className={mine ? "flex justify-end" : "flex justify-start"}>
@@ -179,7 +199,7 @@ function Bubble({ role, content, typing }: { role: Message["role"]; content: str
             : "max-w-[80%] rounded-2xl border border-stone-200 bg-white px-4 py-2.5 text-base whitespace-pre-wrap shadow-sm"
         }
       >
-        {typing ? <span className="text-stone-400">正在想…</span> : content}
+        {waited ? <span className="text-stone-400">正在想… {waited}s</span> : content}
       </div>
     </div>
   )
