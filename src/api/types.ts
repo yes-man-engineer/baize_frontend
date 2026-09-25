@@ -45,8 +45,12 @@ export interface Detail {
  * delta 一段正文 / done 说完了 / error 出错了（HTTP 状态码已经是 200，只能这样报）
  */
 export type ChatEvent =
-  /** 模型的思考过程，不是答案，不入库，灰着显示就行 */
-  | { type: "thinking"; text: string }
+  /**
+   * 模型还在思考，chars 是已经思考的字数。
+   * 思考内容本身后端不会发下来：模型在思考里会大段复述系统提示词，
+   * 发到浏览器等于把提示词公开。这里只有一个数字。
+   */
+  | { type: "thinking"; chars: number }
   | { type: "delta"; text: string }
   | { type: "done"; data: { message_id: string } }
   | { type: "error"; message: string }

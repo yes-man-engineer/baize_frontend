@@ -4,9 +4,10 @@ import type { ChatEvent } from "./types"
 /**
  * streamReply 让模型回一句，边收边通过 onDelta 往外吐。
  *
- * onDelta 的 thinking 为真表示这一段是模型的思考过程，不是答案。
- * 这个模型思考要花十几到几十秒，占掉首字延迟的全部，不显示出来
- * 用户就得对着空白干等。
+ * onProgress 有两种调用：thinkingChars 大于 0 表示模型还在思考，
+ * 这是已思考的字数，text 为空；等于 0 时 text 才是给用户的正文。
+ * 这个模型思考要花十几到几十秒，占掉首字延迟的全部，不给点反馈
+ * 用户就得对着空白干等。思考内容本身后端不发，防提示词外泄。
  *
  * content 传空字符串表示「我没新话，你先开口」，刚建完项目的第一次就是这样。
  * 返回落库后那条回复的 id。
@@ -17,7 +18,7 @@ import type { ChatEvent } from "./types"
 export async function streamReply(
   projectId: string,
   content: string,
-  onDelta: (text: string, thinking: boolean) => void,
+  onProgress: (text: string, thinkingChars: number) => void,
 ): Promise<string> {
   const url = `${BASE}/projects/${encodeURIComponent(projectId)}/messages`
 
@@ -73,8 +74,8 @@ export async function streamReply(
         continue
       }
 
-      if (event.type === "thinking") onDelta(event.text, true)
-      else if (event.type === "delta") onDelta(event.text, false)
+      if (event.type === "thinking") onProgress("", event.chars)
+      else if (event.type === "delta") onProgress(event.text, 0)
       else if (event.type === "done") messageId = event.data.message_id
       else if (event.type === "error") failure = event.message
     }

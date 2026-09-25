@@ -17,7 +17,7 @@ export default function ProjectPage() {
   const [pending, setPending] = useState("")
   const [streaming, setStreaming] = useState(false)
   const [waited, setWaited] = useState(0)
-  const [thinking, setThinking] = useState("")
+  const [thought, setThought] = useState(0)
   const [sendError, setSendError] = useState<string | null>(null)
 
   const bottom = useRef<HTMLDivElement>(null)
@@ -43,7 +43,7 @@ export default function ProjectPage() {
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages, pending, thinking])
+  }, [messages, pending, thought])
 
   // 模型出第一个字之前要等十几到几十秒，没有秒数用户分不清是在想还是挂了。
   useEffect(() => {
@@ -62,19 +62,17 @@ export default function ProjectPage() {
       setSendError(null)
       setStreaming(true)
       setPending("")
-      setThinking("")
+      setThought(0)
 
       // 先乐观显示出去，不然按完发送要等好几秒才看得到自己说的话
       const mine = content ? localMessage(id, "user", content) : null
       if (mine) setMessages((prev) => [...prev, mine])
 
       let full = ""
-      let thought = ""
       try {
-        const replyId = await streamReply(id, content, (text, isThinking) => {
-          if (isThinking) {
-            thought += text
-            setThinking(thought)
+        const replyId = await streamReply(id, content, (text, thinkingChars) => {
+          if (thinkingChars > 0) {
+            setThought(thinkingChars)
             return
           }
           full += text
@@ -92,7 +90,7 @@ export default function ProjectPage() {
       } finally {
         setStreaming(false)
         setPending("")
-        setThinking("")
+        setThought(0)
       }
     },
     [id, streaming],
@@ -150,7 +148,7 @@ export default function ProjectPage() {
           (pending ? (
             <Bubble role="assistant" content={pending} />
           ) : (
-            <Thinking waited={waited} text={thinking} />
+            <Thinking waited={waited} thought={thought} />
           ))}
 
         <ErrorNote message={sendError} />
@@ -211,30 +209,21 @@ function Bubble({ role, content }: { role: Message["role"]; content: string }) {
 }
 
 /**
- * Thinking 正文出来之前显示模型的思考过程。
+ * Thinking 正文出来之前的等待提示。
  *
- * 这个模型一次能想一两千字，全铺出来会把对话顶没了，所以只留末尾一小段，
- * 看着像它正在想。它不是答案，用户不用读，能看出在动就够了。
+ * 只有秒数和已思考字数，没有思考内容，后端根本不发（里面有系统提示词）。
+ * 两个数都在真实地涨，用户能看出它在干活，而不是页面卡住了。
  */
-function Thinking({ waited, text }: { waited: number; text: string }) {
-  const tail = text.slice(-THINKING_TAIL)
+function Thinking({ waited, thought }: { waited: number; thought: number }) {
   return (
     <div className="flex justify-start">
       <div className="max-w-[80%] rounded-2xl border border-stone-200 bg-stone-50 px-4 py-2.5">
-        <div className="text-sm text-stone-400">正在想… {waited}s</div>
-        {tail && (
-          <div className="mt-1 text-xs leading-relaxed whitespace-pre-wrap text-stone-300">
-            {text.length > THINKING_TAIL && "…"}
-            {tail}
-          </div>
-        )}
+        <span className="text-sm text-stone-400">正在想… {waited}s</span>
+        {thought > 0 && <span className="ml-2 text-xs text-stone-300">已思考 {thought} 字</span>}
       </div>
     </div>
   )
 }
-
-/** 思考内容只显示末尾这么多字 */
-const THINKING_TAIL = 180
 
 /**
  * localMessage 只为了立刻渲染，不是库里那一条。
