@@ -45,6 +45,8 @@ export interface Detail {
  * delta 一段正文 / done 说完了 / error 出错了（HTTP 状态码已经是 200，只能这样报）
  */
 export type ChatEvent =
+  /** 模型的思考过程，不是答案，不入库，灰着显示就行 */
+  | { type: "thinking"; text: string }
   | { type: "delta"; text: string }
   | { type: "done"; data: { message_id: string } }
   | { type: "error"; message: string }

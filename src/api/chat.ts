@@ -4,6 +4,10 @@ import type { ChatEvent } from "./types"
 /**
  * streamReply 让模型回一句，边收边通过 onDelta 往外吐。
  *
+ * onDelta 的 thinking 为真表示这一段是模型的思考过程，不是答案。
+ * 这个模型思考要花十几到几十秒，占掉首字延迟的全部，不显示出来
+ * 用户就得对着空白干等。
+ *
  * content 传空字符串表示「我没新话，你先开口」，刚建完项目的第一次就是这样。
  * 返回落库后那条回复的 id。
  *
@@ -13,7 +17,7 @@ import type { ChatEvent } from "./types"
 export async function streamReply(
   projectId: string,
   content: string,
-  onDelta: (text: string) => void,
+  onDelta: (text: string, thinking: boolean) => void,
 ): Promise<string> {
   const url = `${BASE}/projects/${encodeURIComponent(projectId)}/messages`
 
@@ -69,7 +73,8 @@ export async function streamReply(
         continue
       }
 
-      if (event.type === "delta") onDelta(event.text)
+      if (event.type === "thinking") onDelta(event.text, true)
+      else if (event.type === "delta") onDelta(event.text, false)
       else if (event.type === "done") messageId = event.data.message_id
       else if (event.type === "error") failure = event.message
     }
